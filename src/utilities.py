@@ -7,6 +7,7 @@ import glob
 import random
 import re
 import math
+import string
 
 
 # this function returns token, typecount and type set ( unique word list) from a  text file file
@@ -27,7 +28,8 @@ def readTxtData(path: str) -> dobj:
 
             # Read and extract into a set
             for line in file1:
-                word_list_from_line = re.split(r'\s+', line.lower().strip("\n").strip())
+                punc = str.maketrans('','', string.punctuation)
+                word_list_from_line = re.split(r'\s+', line.lower().strip("\n").strip().translate(punc))
                 wordSet.totalWordCount += len(word_list_from_line)
                 uniqueWordSet.update(word_list_from_line)
 
@@ -76,56 +78,6 @@ def SampleConversation(paths : list) -> dobj:
 
         return finalsample
 
-
-    #This function can be called to sample a folder for x days with newBooks new books each day.
-def sampleGroupForXXXXXXdaysOLD(xdays: int, folderPath: str, newBooks: int):
-    
-    listofFiles = getAllBookPath(folderPath)
-    random.shuffle(listofFiles)
-    lastSample = None
-    graphData = []
-    day = 1
-    listLen = len(listofFiles)
-    filePointer = 0
-    
-    if listLen == 0:
-        raise("there are no content to sample. the folder does not contains any text files.")
-
-    while day <= xdays:
-        #Do the sampling.
-        if filePointer == listLen:
-            break
-
-        newList = []
-        tempNewBooks = newBooks
-        while tempNewBooks > 0:
-            newList.append(listofFiles[filePointer])
-            filePointer += 1
-            tempNewBooks -= 1
-            if filePointer == listLen:
-                print('Not enought content to sample, sampling whatever content is left')
-                break
-        
-        newSampling = SampleConversation(newList)
-
-        # Sample yesterday sampling and todays sampling
-        finalSampling = sampleTwoSamplings(newSampling, lastSample)
-
-        # this is daily data required for graphing
-        graphObj = dobj()
-        graphObj.day = day
-        graphObj.totalWordCount = finalSampling.totalWordCount
-        graphObj.uniqueWordCount = finalSampling.uniqueWordCount
-        graphObj.averaged = False
-
-        #print("day is: " + str(graphObj.day) + " totalWordCount : " + str(graphObj.totalWordCount) + " unique word count : " + str(graphObj.uniqueWordCount))
-
-        graphData.append(graphObj)
-
-        lastSample = finalSampling
-        day += 1
-
-    return graphData
 
 def sampleGroupForXdays(xdays: int, bookFolderPath: str, newBooks: int, convoFolderPath:str, newConvo: int):
     

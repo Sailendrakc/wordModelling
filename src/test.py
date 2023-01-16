@@ -8,9 +8,9 @@ def test_sampleForXdaysNTimes():
     convoPath = r'C:\Users\saile\OneDrive\Desktop\wordModelling\Convos'
 
     xdays = 365
-    booksPerDay = 1
-    convoPerDay = 4
-    iterationTime = 10
+    booksPerDay = 0
+    convoPerDay = 17
+    iterationTime = 30
     saveasCSV = False
 
     print('Starting the sampling..')
