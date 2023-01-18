@@ -7,6 +7,7 @@ import glob
 import random
 import re
 import math
+import string
 
 
 # this function returns token, typecount and type set ( unique word list) from a  text file file
@@ -18,16 +19,25 @@ def readTxtData(path: str) -> dobj:
         if path is None or not os.path.exists(path):
             raise Exception("Please provide a valid path.")
 
+        #Object to store text attributes like token, types and unique word set
         wordSet = dobj()
         wordSet.totalWordCount = 0
         wordSet.uniqueWordCount = 0
         uniqueWordSet = set()
+
         # Open file
         with open(path, "r") as file1:
 
+            #Create a dictionary to replae the punctuation from the sentence.
+            punc = str.maketrans('','', string.punctuation)
+
+            # Remove apostrophie from make trans dictionary so it wont be translated to None.
+            apostrophieUnicode = 39
+            del punc[apostrophieUnicode]
+
             # Read and extract into a set
             for line in file1:
-                word_list_from_line = re.split(r'\s+', line.lower().strip("\n").strip())
+                word_list_from_line = refineLine(line, punc)
                 wordSet.totalWordCount += len(word_list_from_line)
                 uniqueWordSet.update(word_list_from_line)
 
@@ -35,6 +45,22 @@ def readTxtData(path: str) -> dobj:
         wordSet.uniqueWordSet = uniqueWordSet
         # Return the set
         return wordSet
+
+#This method is used to remove whitespaces and punctuation from a string and it returns a list of words.
+def refineLine(line: str, punctuationDict: dict) -> list:
+
+    punc = punctuationDict
+    if punctuationDict is None:
+        punc = str.maketrans('','', string.punctuation)
+
+        # Remove apostrophie from make trans dictionary so it wont be translated to None.
+        apostrophieUnicode = 39
+        del punc[apostrophieUnicode]
+
+    wordList =  line.lower().strip("' ").translate(punc).split()
+    return wordList
+
+
 
 # this function gets all the .txt files inside a given folder
 def getAllBookPath(pathOfFolder: str) -> list:
@@ -77,56 +103,6 @@ def SampleConversation(paths : list) -> dobj:
         return finalsample
 
 
-    #This function can be called to sample a folder for x days with newBooks new books each day.
-def sampleGroupForXXXXXXdaysOLD(xdays: int, folderPath: str, newBooks: int):
-    
-    listofFiles = getAllBookPath(folderPath)
-    random.shuffle(listofFiles)
-    lastSample = None
-    graphData = []
-    day = 1
-    listLen = len(listofFiles)
-    filePointer = 0
-    
-    if listLen == 0:
-        raise("there are no content to sample. the folder does not contains any text files.")
-
-    while day <= xdays:
-        #Do the sampling.
-        if filePointer == listLen:
-            break
-
-        newList = []
-        tempNewBooks = newBooks
-        while tempNewBooks > 0:
-            newList.append(listofFiles[filePointer])
-            filePointer += 1
-            tempNewBooks -= 1
-            if filePointer == listLen:
-                print('Not enought content to sample, sampling whatever content is left')
-                break
-        
-        newSampling = SampleConversation(newList)
-
-        # Sample yesterday sampling and todays sampling
-        finalSampling = sampleTwoSamplings(newSampling, lastSample)
-
-        # this is daily data required for graphing
-        graphObj = dobj()
-        graphObj.day = day
-        graphObj.totalWordCount = finalSampling.totalWordCount
-        graphObj.uniqueWordCount = finalSampling.uniqueWordCount
-        graphObj.averaged = False
-
-        #print("day is: " + str(graphObj.day) + " totalWordCount : " + str(graphObj.totalWordCount) + " unique word count : " + str(graphObj.uniqueWordCount))
-
-        graphData.append(graphObj)
-
-        lastSample = finalSampling
-        day += 1
-
-    return graphData
-
 def sampleGroupForXdays(xdays: int, bookFolderPath: str, newBooks: int, convoFolderPath:str, newConvo: int):
     
     listofBooks = getAllBookPath(bookFolderPath)
@@ -153,11 +129,11 @@ def sampleGroupForXdays(xdays: int, bookFolderPath: str, newBooks: int, convoFol
 
     if totalRequiredBooks > bookLen:
         print(str(totalRequiredBooks) + " books are necessary for sampling but only availabe books are: " + str(bookLen) +
-       ". Warning, sampling will be done by whatever available. ")
+       ". Warning, further sampling will be discontinued and final result will be caculated as is. ")
 
     if totalRequiredConvo > convoLen:
        print(str(totalRequiredConvo) + " conversations are necessary for sampling but only availabe conversations are: " + str(convoLen) +
-       ". Warning, sampling will be done by whatever available. ")
+       ". Warning, further sampling will be discontinued and final result will be caculated as is. ")
 
     while day <= xdays:
         #Do the sampling.
@@ -194,6 +170,7 @@ def sampleGroupForXdays(xdays: int, bookFolderPath: str, newBooks: int, convoFol
         graphObj.day = day
         graphObj.totalWordCount = finalSampling.totalWordCount
         graphObj.uniqueWordCount = finalSampling.uniqueWordCount
+        graphObj.uniqueWordSet = finalSampling.uniqueWordSet
         graphObj.averaged = False
 
         #print("day is: " + str(graphObj.day) + " totalWordCount : " + str(graphObj.totalWordCount) + " unique word count : " + str(graphObj.uniqueWordCount))
@@ -234,39 +211,31 @@ def sampleGroupForXdaysNTimes(xdays: int, bookFolderPath: str, newBooks: int, co
         iterations.append(oneIteration)
         nTimes -=1
 
-    graphObj = dobj()
-    graphObj.day = xdays
-    graphObj.totalWordCount = 0
-    graphObj.uniqueWordCount = 0
-    graphObj.averaged = True
     divisor = len(iterations)
+    averagedGraphData =[]
     #now average the data
     print('calculating the average ....')
     counter = 0
     while counter < xdays:
+        graphObj = dobj()
+        graphObj.day = counter +1
+        graphObj.averaged= True
+        graphObj.totalWordCount = 0
+        graphObj.uniqueWordCount = 0
+
         for item in iterations:
             graphObj.totalWordCount += item[counter].totalWordCount
             graphObj.uniqueWordCount += item[counter].uniqueWordCount
 
         graphObj.totalWordCount = math.ceil(graphObj.totalWordCount/divisor)
         graphObj.uniqueWordCount = math.ceil(graphObj.uniqueWordCount/divisor)
-        print("day is: " + str(counter+1) + " avg totalWordCount : " + str(graphObj.totalWordCount) + " avg unique word count : " + str(graphObj.uniqueWordCount))
 
+        #Only saving the unique word set of last iteration. TODO
+        #graphObj.uniqueWordSet = iterations[len(iterations)-1][counter].uniqueWordSet
+
+        print("day is: " + str(counter+1) + " avg totalWordCount : " + str(graphObj.totalWordCount) + " avg unique word count : " + str(graphObj.uniqueWordCount))
+        averagedGraphData.append(graphObj)
         counter +=1
 
 
-    return graphObj
-
-
-
-def SampleLowGroup ( bookFolder: str):
-    finalResultList = sampleGroupForXdays(365, bookFolder, 5)
-    # Now graph it maybe
-
-def SampleMiddleGroup( bookFolder: str):
-    finalResultList = sampleGroupForXdays(365, bookFolder, 10)
-    # Now graph it.
-
-def SampleHighGroup( bookFolder: str):
-    finalResultList = sampleGroupForXdays(365, bookFolder, 17)
-    # Now graph it.
+    return averagedGraphData

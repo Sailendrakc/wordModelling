@@ -121,7 +121,12 @@ class TestUtilities(unittest.TestCase):
         self.assertEqual(finalSampling.uniqueWordCount, expectedSample.uniqueWordCount)
         self.assertEqual(finalSampling.totalWordCount, expectedSample.totalWordCount)
 
+    def test_refineLine(self):
+        testStr = "' 'I am a fox? Am    I    A Fox.., ? He'y ! 10%  \n       \n  newLine  \n"
+        expectedList = ['i', 'am', 'a', 'fox', 'am', 'i', 'a', 'fox', "he'y", '10', 'newline']
+        outputList = utilities.refineLine(testStr, None)
 
+        self.assertEqual(expectedList, outputList)
 
 if __name__ == '__main__':
     unittest.main()
