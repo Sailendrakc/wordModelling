@@ -9,8 +9,8 @@ def test_sampleForXdaysNTimes():
 
     xdays = 365
     booksPerDay = 0
-    convoPerDay = 17
-    iterationTime = 30
+    convoPerDay = 5
+    iterationTime = 10
     saveasCSV = False
 
     print('Starting the sampling..')
@@ -44,5 +44,8 @@ def test_sampleForXdaysNTimes():
     
         # saving the dataframe 
         df.to_csv('wordModelling.csv') 
+
+
+
 
 test_sampleForXdaysNTimes()
