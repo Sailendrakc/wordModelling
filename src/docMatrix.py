@@ -39,9 +39,11 @@ def ToDocumentMatrix(path):
         print(df2)
         print("\n ----------------------------------------------- \n")
 
+        # Get Transpose coz excel limit
+        df2 = df2.T
 
         #Now save dataframe as csv
-        print(" \nSaving the matrix document, Please dont close the document, It may take a while... \n")
+        print(" \nSaving the matrix document, Please dont close the program, It may take a while... \n")
         df2.to_csv("vectorizedDoc.csv")
         print("Document saved, Now you can close the program.")
 
