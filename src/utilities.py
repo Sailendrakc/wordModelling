@@ -47,7 +47,7 @@ def readTxtData(path: str) -> dobj:
         return wordSet
 
 #This method is used to remove whitespaces and punctuation from a string and it returns a list of words.
-def refineLine(line: str, punctuationDict: dict) -> list:
+def refineLine(line: str, punctuationDict: dict = None) -> list:
 
     punc = punctuationDict
     if punctuationDict is None:
