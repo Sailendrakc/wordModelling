@@ -8,7 +8,8 @@ import random
 import re
 import math
 import string
-
+import matplotlib.pyplot as plt
+import pandas as pd 
 
 # this function returns token, typecount and type set ( unique word list) from a  text file file
 def readTxtData(path: str) -> dobj:
@@ -222,16 +223,15 @@ def sampleGroupForXdaysNTimes(xdays: int, bookFolderPath: str, newBooks: int, co
         graphObj.averaged= True
         graphObj.totalWordCount = 0
         graphObj.uniqueWordCount = 0
+        graphObj.uniqueWordSet = set()
 
         for item in iterations:
             graphObj.totalWordCount += item[counter].totalWordCount
             graphObj.uniqueWordCount += item[counter].uniqueWordCount
+            graphObj.uniqueWordSet  = set.union(graphObj.uniqueWordSet).union(item[counter].uniqueWordSet) # ----------------- TODO ASK
 
         graphObj.totalWordCount = math.ceil(graphObj.totalWordCount/divisor)
         graphObj.uniqueWordCount = math.ceil(graphObj.uniqueWordCount/divisor)
-
-        #Only saving the unique word set of last iteration. TODO
-        #graphObj.uniqueWordSet = iterations[len(iterations)-1][counter].uniqueWordSet
 
         print("day is: " + str(counter+1) + " avg totalWordCount : " + str(graphObj.totalWordCount) + " avg unique word count : " + str(graphObj.uniqueWordCount))
         averagedGraphData.append(graphObj)
@@ -239,3 +239,61 @@ def sampleGroupForXdaysNTimes(xdays: int, bookFolderPath: str, newBooks: int, co
 
 
     return averagedGraphData
+
+#This takes a list of sampling data from day1 to dayn, then removesx percentage of uniue words from the set.
+def removeWordsFromUniqueSet(averagedData, percentage):
+    if averagedData == None:
+        raise("Please pass a valid averaged data")
+
+    if percentage > 100 or percentage < 0:
+        raise("Percentage of words to be removed should be between 0 to 100.")
+    
+    print("Removing some percentage of unique words")
+
+    #now loop the data and remove x percentage of words.
+    for n in range(len(averagedData)):
+        item = averagedData[n]
+        listFromSet = list(item.uniqueWordSet)
+        random.shuffle(listFromSet)
+
+        #now calculate how much items to remove
+        numberOfItems = math.floor((percentage/100)*len(item.uniqueWordSet))
+
+        newList = listFromSet[numberOfItems:]
+        item.uniqueWordSet = set(newList)
+        item.uniqueWordCount = len(item.uniqueWordSet)
+
+    return averagedData
+
+def graphAveragedData(averagedData, plot = False, saveasCSV= False):
+    if averagedData == None:
+        raise("Please pass a valid averaged data")
+
+    #Prepare data
+    days = range(1, len(averagedData) + 1)
+
+    dailyUniqueWordCountList =[]
+    dailyTotalWordCountList = []
+
+    for dailyAverageData in averagedData:
+        dailyUniqueWordCountList.append(dailyAverageData.uniqueWordCount)
+        dailyTotalWordCountList.append(dailyAverageData.totalWordCount)
+
+    #Plot
+    if plot:
+        plt.plot(days, dailyUniqueWordCountList) #or use totalWords to plot total words 
+        plt.xlabel('Days')
+        plt.ylabel('Words')
+        plt.show()
+    
+    #Save as csv
+    if saveasCSV:
+        # dictionary of lists  
+        fields = {'days': days, 'totalWords': dailyTotalWordCountList, 'uniqueWords': dailyUniqueWordCountList}  
+       
+        df = pd.DataFrame(fields) 
+    
+        # saving the dataframe 
+        df.to_csv('wordModelling.csv') 
+
+    return dailyUniqueWordCountList; #returning a list of numbers that represents unique word count in each day.
