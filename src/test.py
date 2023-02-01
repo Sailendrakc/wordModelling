@@ -1,7 +1,7 @@
 import utilities
 import os
 import matplotlib.pyplot as plt
-import pandas as pd 
+import pandas as pd
 
 
 def plotDailyData(dailyData, dailyData2 = None):
@@ -27,20 +27,23 @@ def test_sampleForXdaysNTimes():
     iterationTime = 5
 
     print('Starting the sampling..')
-    finalList = utilities.sampleGroupForXdaysNTimes(xdays, bookPath, booksPerDay, convoPath, convoPerDay, iterationTime)
+    iterations = utilities.sampleGroupForXdaysNTimes(xdays, bookPath, booksPerDay, convoPath, convoPerDay, iterationTime)
     #FinalList is an array, that contain item called dobj, dobj has attributes : day ( which day), totalWordCount, uniqueWordcount, averaged (true if the data is averaged ntimes).
-    
+    print('sampling done');
+    #[[day1, day2, day3, day4, day4], [day1, day2, day3, day4], [day1, day2, day3, day4]]
 
-    #Example on how to get unique word count list from graph data for plotting.
-    uniqueWordCountList1 = utilities.graphAveragedData(finalList)
-    #Now you can plot uniqueWordCountList however you like.
+    averagedIterationCycle = utilities.averageIteration(iterations)
+    #[AvgDay1, AvgDay2, AvgDay3, AvgDay4]
 
-    removedUniqueWordData = utilities.removeWordsFromUniqueSet(finalList, 10)
+    #defecit iterations
+    defecitIteration = utilities.defecitIteration(iterations, 10)
+    #[[_day1, _day2, _day3, _day4], [_day1, _day2, _day3, _day4], [_day1, _day2, _day3, _day4]]
 
-    removedUniqueWordCountList = utilities.graphAveragedData(removedUniqueWordData)
+    #Create average cycle out of defecit iterations.
+    averagedDefecitIterationCycle = utilities.averageIteration(defecitIteration)
+    #[_AvgDay1, _AvgDay2, _AvgDay3, _AvgDay4]
 
-    plotDailyData(uniqueWordCountList1, removedUniqueWordCountList)
-
-
+    # get plotting data and plot for each data points.
+    utilities.graphCycleData([averagedIterationCycle, averagedDefecitIterationCycle], True, False);
 
 test_sampleForXdaysNTimes()
