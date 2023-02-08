@@ -1,6 +1,7 @@
 
 from ast import Try
 from cmath import e
+from email import iterators
 from dumpObject import dobj
 import os
 import glob
@@ -296,33 +297,33 @@ def defecitIteration(iteration, defecitPercentage):
     #Loop the iteration and make a defecit on each sample. Save the list of that sample to new Iteration list
     print("starting doing defecit to a iteration")
     newIteration = []
-    for cycle in iteration:
-        newCycle = []
-        for sample in cycle:
+    for simulation in iteration:
+        newsimulation = []
+        for sample in simulation:
             newSample = defecitASample(sample, defecitPercentage)
-            newCycle.append(newSample)
-            print("Deficit done for a cycle")
+            newsimulation.append(newSample)
+            print("Deficit done for a simulation")
         print("defecit done to an iteration.")
-        newIteration.append(newCycle)
+        newIteration.append(newsimulation)
 
     return newIteration
 
-# This function will graph a cycle(list of daily samples) or list of cycles.
-# All cycles should have equal number of samplings in them. 
-def graphCycleData(cycleDataList, plot = False, saveasCSV= False):
-    if cycleDataList == None or len(cycleDataList) < 1:
-        raise Exception("Please pass a valid cycle data list to plot")
+# This function will graph a simulation(list of daily samples) or list of simulations.
+# All simulations should have equal number of samplings in them. 
+def graphsimulationData(simulationDataList, plot = False, saveasCSV= False):
+    if simulationDataList == None or len(simulationDataList) < 1:
+        raise Exception("Please pass a valid simulation data list to plot")
     print("Graphing data")
     #Prepare data
-    days = range(1, len(cycleDataList[0]) + 1)
+    days = range(1, len(simulationDataList[0]) + 1)
     plt.xlabel('Days')
     plt.ylabel('Words')
 
-    for cycles in cycleDataList:
+    for simulations in simulationDataList:
         dailyUniqueWordCountList =[]
         dailyTotalWordCountList = []
 
-        for sample in cycles:
+        for sample in simulations:
             dailyUniqueWordCountList.append(sample.uniqueWordCount)
             dailyTotalWordCountList.append(sample.totalWordCount)
 
@@ -342,3 +343,78 @@ def graphCycleData(cycleDataList, plot = False, saveasCSV= False):
     
     if plot:
         plt.show()
+
+
+#This function takes a baseline iteration and adds new books and conversation to each sample.
+def addBookAndConvoToIteration(bookFolderPath, newBooks, convoFolderPath, newConvo, iteration):
+    listofBooks = getAllBookPath(bookFolderPath)
+    listofConvo = getAllBookPath(convoFolderPath)
+
+    random.shuffle(listofBooks)
+    random.shuffle(listofConvo)
+
+    bookLen = len(listofBooks)
+    convoLen = len(listofConvo)
+
+    bookPointer = 0
+    convoPointer = 0
+
+
+    if bookLen == 0 or convoLen == 0:
+        raise Exception("there are no enough content to sample. one of the given folder is empty.")
+    if iteration == None or len(iteration) == 0:
+        raise Exception("the iteration is null. Cannot add new books and conversation when baseline iteration is null or invalid.")
+
+    xdays = len(iteration[0])
+    totalRequiredBooks = xdays * newBooks
+    totalRequiredConvo = xdays * newConvo
+
+    if totalRequiredBooks > bookLen:
+        print(str(totalRequiredBooks) + " books are necessary for sampling but only availabe books are: " + str(bookLen) +
+       ". Warning, further sampling will be discontinued and final result will be caculated as is. ")
+
+    if totalRequiredConvo > convoLen:
+       print(str(totalRequiredConvo) + " conversations are necessary for sampling but only availabe conversations are: " + str(convoLen) +
+       ". Warning, further sampling will be discontinued and final result will be caculated as is. ")
+
+    newIteration = []
+    for simulation in iteration:
+        newsimulation = []
+        lastSample = None
+        for sample in simulation:
+            #Do the sampling.
+            if bookPointer == bookLen or convoPointer == convoLen:
+                break
+
+            newList = []
+            tempNewBooks = newBooks
+            tempNewConvo = newConvo
+
+            while tempNewConvo > 0:
+                newList.append(listofConvo[convoPointer])
+                convoPointer += 1
+                tempNewConvo -=1
+                if convoPointer == convoLen:
+                    print('Not enought conversation to sample, sampling whatever content was left')
+                    break
+
+            while tempNewBooks > 0:
+                newList.append(listofBooks[bookPointer])
+                bookPointer += 1
+                tempNewBooks -= 1
+                if bookPointer == bookLen:
+                    print('Not enought book to sample, sampling whatever content is left')
+                    break
+        
+            newSampling = SampleConversation(newList)
+            # Sample baseline sampling and todays sampling
+            mixedSampling = sampleTwoSamplings(newSampling, sample)
+            finalSampling = sampleTwoSamplings(mixedSampling, lastSample)
+            lastSample = finalSampling
+            newsimulation.append(finalSampling)
+            print("baseline sample enriched sucessfully.")
+
+        newIteration.append(newsimulation)
+        print("new books and convo added to a baseline simulation.")
+    return newIteration
+#Question, do we add new books to every sample in every simulation and every iteration?

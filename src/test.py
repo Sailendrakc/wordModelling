@@ -1,3 +1,4 @@
+from ctypes import util
 import utilities
 import os
 import matplotlib.pyplot as plt
@@ -32,18 +33,24 @@ def test_sampleForXdaysNTimes():
     print('sampling done');
     #[[day1, day2, day3, day4, day4], [day1, day2, day3, day4], [day1, day2, day3, day4]]
 
-    averagedIterationCycle = utilities.averageIteration(iterations)
+    averagedIterationsimulation = utilities.averageIteration(iterations)
     #[AvgDay1, AvgDay2, AvgDay3, AvgDay4]
 
     #defecit iterations
     defecitIteration = utilities.defecitIteration(iterations, 10)
     #[[_day1, _day2, _day3, _day4], [_day1, _day2, _day3, _day4], [_day1, _day2, _day3, _day4]]
 
-    #Create average cycle out of defecit iterations.
-    averagedDefecitIterationCycle = utilities.averageIteration(defecitIteration)
+    #this is iteration that was enriched with 1 book and 2 convo per day.
+    addedIteration = utilities.addBookAndConvoToIteration(bookPath, 1, convoPath, 2, defecitIteration)
+
+    #Create average simulation out of defecit iterations.
+    averagedDefecitIterationsimulation = utilities.averageIteration(defecitIteration)
     #[_AvgDay1, _AvgDay2, _AvgDay3, _AvgDay4]
 
+    #this is averaged version of that enriched iteration.
+    averagedAddedIterationsimulation = utilities.averageIteration(addedIteration)
+
     # get plotting data and plot for each data points.
-    utilities.graphCycleData([averagedIterationCycle, averagedDefecitIterationCycle], True, False);
+    utilities.graphsimulationData([averagedIterationsimulation, averagedDefecitIterationsimulation, averagedAddedIterationsimulation], True, False);
 
 test_sampleForXdaysNTimes()
