@@ -19,19 +19,21 @@ def plotDailyData(dailyData, dailyData2 = None):
 
 
 def test_sampleForXdaysNTimes():
-    bookPath = r'C:\Users\saile\OneDrive\Desktop\wordModelling\Books'
+    bookPath = r'C:\Users\saile\OneDrive\Desktop\wordModelling\book1'
     convoPath = r'C:\Users\saile\OneDrive\Desktop\wordModelling\Convos'
 
-    xdays = 365
-    booksPerDay = 0
-    convoPerDay = 3
+    xdays = 100
+    booksPerDay = 5
+    convoPerDay = 0
     iterationTime = 5
 
     print('Starting the sampling..')
+
+    #baseLine
     iterations = utilities.sampleGroupForXdaysNTimes(xdays, bookPath, booksPerDay, convoPath, convoPerDay, iterationTime)
     #FinalList is an array, that contain item called dobj, dobj has attributes : day ( which day), totalWordCount, uniqueWordcount, averaged (true if the data is averaged ntimes).
     print('sampling done');
-    #[[day1, day2, day3, day4, day4], [day1, day2, day3, day4], [day1, day2, day3, day4]]
+    #[[day1, day2, day3, day4, day5], [day1, day2, day3, day4], [day1, day2, day3, day4]]
 
     averagedIterationsimulation = utilities.averageIteration(iterations)
     #[AvgDay1, AvgDay2, AvgDay3, AvgDay4]
@@ -41,7 +43,9 @@ def test_sampleForXdaysNTimes():
     #[[_day1, _day2, _day3, _day4], [_day1, _day2, _day3, _day4], [_day1, _day2, _day3, _day4]]
 
     #this is iteration that was enriched with 1 book and 2 convo per day.
-    addedIteration = utilities.addBookAndConvoToIteration(bookPath, 1, convoPath, 2, defecitIteration)
+    #INPUT -[[_day1, _day2, _day3, _day4], [_day1, _day2, _day3, _day4], [_day1, _day2, _day3, _day4]]
+    #OUTPUt - [[_day1, _day2, _day3, _day4], [_day1, _day2, _day3, _day4], [_day1, _day2, _day3, _day4]]
+    addedIteration = utilities.addBookAndConvoToIteration(bookPath, 1, convoPath, 0, defecitIteration)
 
     #Create average simulation out of defecit iterations.
     averagedDefecitIterationsimulation = utilities.averageIteration(defecitIteration)

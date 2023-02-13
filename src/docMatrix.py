@@ -45,7 +45,7 @@ def ToDocumentMatrix(path):
 
         #Get list of actual words to make matrix of.
         rawWordList = df1["Randomized Tokens"].values.tolist()
-
+        print(rawWordList)
         print(df1)
         print("\n ----------------------------------------------- \n")
 
@@ -65,7 +65,8 @@ def ToDocumentMatrix(path):
         #Create new dataframe
         df2 = pd.DataFrame(data =dataa, columns = names, index = df1["Transcript_FILE_ID"])
         df2 = df2.reset_index()
-
+        print( "\n printing df2: ------------------")
+        print(df2)
         print("\n ----------------------------------------------- \n")
 
         # Get Transpose coz excel limit
@@ -75,7 +76,7 @@ def ToDocumentMatrix(path):
         print(df2)
         #Now save dataframe as csv
         print(" \nSaving the matrix document, Please dont close the program, It may take a while... \n")
-        df2.to_csv("vectorizedDoc.csv")
+        #df2.to_csv("vectorizedDoc.csv")
         print("Document saved, Now you can close the program.")
 
 pathtofile = r'C:\Users\saile\OneDrive\Desktop\wordModelling\otherSrc\rawPreDTM.xlsx'

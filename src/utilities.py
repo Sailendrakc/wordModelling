@@ -2,6 +2,7 @@
 from ast import Try
 from cmath import e
 from email import iterators
+from pickle import TRUE
 from dumpObject import dobj
 import os
 import glob
@@ -27,6 +28,9 @@ def readTxtData(path: str) -> dobj:
         wordSet.uniqueWordCount = 0
         uniqueWordSet = set()
 
+        #Raw words is the list that contains all the words from file
+        wordSet.rawWords = []
+
         # Open file
         with open(path, "r") as file1:
 
@@ -40,6 +44,7 @@ def readTxtData(path: str) -> dobj:
             # Read and extract into a set
             for line in file1:
                 word_list_from_line = refineLine(line, punc)
+                wordSet.rawWords.append(word_list_from_line)
                 wordSet.totalWordCount += len(word_list_from_line)
                 uniqueWordSet.update(word_list_from_line)
 
@@ -143,12 +148,14 @@ def sampleGroupForXdays(xdays: int, bookFolderPath: str, newBooks: int, convoFol
         newList = []
         tempNewBooks = newBooks
         tempNewConvo = newConvo
+        notEnough = False
 
         while tempNewConvo > 0:
             newList.append(listofConvo[convoPointer])
             convoPointer += 1
             tempNewConvo -=1
             if convoPointer == convoLen:
+                notEnough = True
                 print('Not enought conversation to sample, sampling whatever content was left')
                 break
 
@@ -157,9 +164,13 @@ def sampleGroupForXdays(xdays: int, bookFolderPath: str, newBooks: int, convoFol
             bookPointer += 1
             tempNewBooks -= 1
             if bookPointer == bookLen:
+                notEnough = True
                 print('Not enought book to sample, sampling whatever content is left')
                 break
         
+        if notEnough:
+            return graphData
+
         newSampling = SampleConversation(newList)
         # Sample yesterday sampling and todays sampling
         finalSampling = sampleTwoSamplings(newSampling, lastSample)
@@ -238,8 +249,10 @@ def averageIteration(iterationObject):
         graphObj.uniqueWordCount = 0
 
         for item in iterationObject:
+
             graphObj.totalWordCount += item[counter].totalWordCount
             graphObj.uniqueWordCount += item[counter].uniqueWordCount
+
 
         graphObj.totalWordCount = math.ceil(graphObj.totalWordCount/divisor)
         graphObj.uniqueWordCount = math.ceil(graphObj.uniqueWordCount/divisor)

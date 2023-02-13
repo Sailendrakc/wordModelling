@@ -6,7 +6,7 @@
 3. List of sample is called a "simulation".
     It contains daily sampling from day 1 to day N.
 
-4. "Iteration" is a list of multiple cycles. So first item of list contains a simulation from day 1 to day N,
+4. "Iteration" is a list of multiple simulation. So first item of list contains a simulation from day 1 to day N,
     second item also contains another simulation from day 1 to day N and so on. Iteration is generally created to smooth out the curve.
 
 5. Iteration data can be averaged to create an averaged simulation.
@@ -25,5 +25,9 @@ Suggestions:
 
 [[_day1, _day2, _day3, _day4], [_day1, _day2, _day3, _day4], [_day1, _day2, _day3, _day4]]
 
-[dog, cat, deer]- > x amount (10) - 3 day1 
-[dog, ball, water, stick] -> (10) - 3+4 day2
+        day1    day2    day3    ..dayN
+dog     4       30      3           6
+cat     0       1       0           0
+..  
+..
+..
