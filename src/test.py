@@ -1,7 +1,8 @@
+from ctypes import util
 import utilities
 import os
 import matplotlib.pyplot as plt
-import pandas as pd 
+import pandas as pd
 
 
 def plotDailyData(dailyData, dailyData2 = None):
@@ -18,29 +19,42 @@ def plotDailyData(dailyData, dailyData2 = None):
 
 
 def test_sampleForXdaysNTimes():
-    bookPath = r'C:\Users\saile\OneDrive\Desktop\wordModelling\Books'
+    bookPath = r'C:\Users\saile\OneDrive\Desktop\wordModelling\book1'
     convoPath = r'C:\Users\saile\OneDrive\Desktop\wordModelling\Convos'
 
-    xdays = 365
-    booksPerDay = 0
-    convoPerDay = 3
+    xdays = 100
+    booksPerDay = 5
+    convoPerDay = 0
     iterationTime = 5
 
     print('Starting the sampling..')
-    finalList = utilities.sampleGroupForXdaysNTimes(xdays, bookPath, booksPerDay, convoPath, convoPerDay, iterationTime)
+
+    #baseLine
+    iterations = utilities.sampleGroupForXdaysNTimes(xdays, bookPath, booksPerDay, convoPath, convoPerDay, iterationTime)
     #FinalList is an array, that contain item called dobj, dobj has attributes : day ( which day), totalWordCount, uniqueWordcount, averaged (true if the data is averaged ntimes).
-    
+    print('sampling done');
+    #[[day1, day2, day3, day4, day5], [day1, day2, day3, day4], [day1, day2, day3, day4]]
 
-    #Example on how to get unique word count list from graph data for plotting.
-    uniqueWordCountList1 = utilities.graphAveragedData(finalList)
-    #Now you can plot uniqueWordCountList however you like.
+    averagedIterationsimulation = utilities.averageIteration(iterations)
+    #[AvgDay1, AvgDay2, AvgDay3, AvgDay4]
 
-    removedUniqueWordData = utilities.removeWordsFromUniqueSet(finalList, 10)
+    #defecit iterations
+    defecitIteration = utilities.defecitIteration(iterations, 10)
+    #[[_day1, _day2, _day3, _day4], [_day1, _day2, _day3, _day4], [_day1, _day2, _day3, _day4]]
 
-    removedUniqueWordCountList = utilities.graphAveragedData(removedUniqueWordData)
+    #this is iteration that was enriched with 1 book and 2 convo per day.
+    #INPUT -[[_day1, _day2, _day3, _day4], [_day1, _day2, _day3, _day4], [_day1, _day2, _day3, _day4]]
+    #OUTPUt - [[_day1, _day2, _day3, _day4], [_day1, _day2, _day3, _day4], [_day1, _day2, _day3, _day4]]
+    addedIteration = utilities.addBookAndConvoToIteration(bookPath, 1, convoPath, 0, defecitIteration)
 
-    plotDailyData(uniqueWordCountList1, removedUniqueWordCountList)
+    #Create average simulation out of defecit iterations.
+    averagedDefecitIterationsimulation = utilities.averageIteration(defecitIteration)
+    #[_AvgDay1, _AvgDay2, _AvgDay3, _AvgDay4]
 
+    #this is averaged version of that enriched iteration.
+    averagedAddedIterationsimulation = utilities.averageIteration(addedIteration)
 
+    # get plotting data and plot for each data points.
+    utilities.graphsimulationData([averagedIterationsimulation, averagedDefecitIterationsimulation, averagedAddedIterationsimulation], True, False);
 
 test_sampleForXdaysNTimes()

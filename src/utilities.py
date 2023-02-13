@@ -1,6 +1,8 @@
 
 from ast import Try
 from cmath import e
+from email import iterators
+from pickle import TRUE
 from dumpObject import dobj
 import os
 import glob
@@ -26,6 +28,9 @@ def readTxtData(path: str) -> dobj:
         wordSet.uniqueWordCount = 0
         uniqueWordSet = set()
 
+        #Raw words is the list that contains all the words from file
+        wordSet.rawWords = []
+
         # Open file
         with open(path, "r") as file1:
 
@@ -39,6 +44,7 @@ def readTxtData(path: str) -> dobj:
             # Read and extract into a set
             for line in file1:
                 word_list_from_line = refineLine(line, punc)
+                wordSet.rawWords.append(word_list_from_line)
                 wordSet.totalWordCount += len(word_list_from_line)
                 uniqueWordSet.update(word_list_from_line)
 
@@ -60,8 +66,6 @@ def refineLine(line: str, punctuationDict: dict = None) -> list:
 
     wordList =  line.lower().strip("' ").translate(punc).split()
     return wordList
-
-
 
 # this function gets all the .txt files inside a given folder
 def getAllBookPath(pathOfFolder: str) -> list:
@@ -103,7 +107,7 @@ def SampleConversation(paths : list) -> dobj:
 
         return finalsample
 
-
+    # This function samples any group for certain amount of days.
 def sampleGroupForXdays(xdays: int, bookFolderPath: str, newBooks: int, convoFolderPath:str, newConvo: int):
     
     listofBooks = getAllBookPath(bookFolderPath)
@@ -123,7 +127,7 @@ def sampleGroupForXdays(xdays: int, bookFolderPath: str, newBooks: int, convoFol
     convoPointer = 0
     
     if bookLen == 0 or convoLen == 0:
-        raise("there are no enough content to sample. one of the given folder is empty.")
+        raise Exception("there are no enough content to sample. one of the given folder is empty.")
 
     totalRequiredBooks = xdays * newBooks
     totalRequiredConvo = xdays * newConvo
@@ -144,12 +148,14 @@ def sampleGroupForXdays(xdays: int, bookFolderPath: str, newBooks: int, convoFol
         newList = []
         tempNewBooks = newBooks
         tempNewConvo = newConvo
+        notEnough = False
 
         while tempNewConvo > 0:
             newList.append(listofConvo[convoPointer])
             convoPointer += 1
             tempNewConvo -=1
             if convoPointer == convoLen:
+                notEnough = True
                 print('Not enought conversation to sample, sampling whatever content was left')
                 break
 
@@ -158,11 +164,14 @@ def sampleGroupForXdays(xdays: int, bookFolderPath: str, newBooks: int, convoFol
             bookPointer += 1
             tempNewBooks -= 1
             if bookPointer == bookLen:
+                notEnough = True
                 print('Not enought book to sample, sampling whatever content is left')
                 break
         
-        newSampling = SampleConversation(newList)
+        if notEnough:
+            return graphData
 
+        newSampling = SampleConversation(newList)
         # Sample yesterday sampling and todays sampling
         finalSampling = sampleTwoSamplings(newSampling, lastSample)
 
@@ -201,34 +210,49 @@ def sampleTwoSamplings(sample1, sample2):
 
 def sampleGroupForXdaysNTimes(xdays: int, bookFolderPath: str, newBooks: int, convoFolderPath:str, newConvo:int, nTimes: int):
     if nTimes <= 0:
-        raise("N times should be greater than 0")
+        raise Exception("N times should be greater than 0")
 
     #[[day1, day2,day3 ...dayn], [day1, day2,day3 ...dayn], [day1, day2,day3 ...dayn]]
     iterations = []
-    
     while nTimes > 0:
+        print("Sampling for " + str(nTimes) + " th iteration.")
         oneIteration = sampleGroupForXdays(xdays, bookFolderPath, newBooks, convoFolderPath, newConvo)
-        print(str(nTimes) + " th iteration done.")
+        print(str(nTimes) + " th iteration sampled.")
         iterations.append(oneIteration)
         nTimes -=1
 
-    divisor = len(iterations)
-    averagedGraphData =[]
+    return iterations
+
+
+#This fucntion takes the iteration data and average it.
+def averageIteration(iterationObject):
+
+    if(len(iterationObject)< 1):
+        raise Exception("iteration object has no items, canot average empty iteration data.")
+
+    #If there is only one item, no need to average it, just return it.
+    if(len(iterationObject) == 1):
+        return iterationObject[0]
+
     #now average the data
+    divisor = len(iterationObject)
+    averagedGraphData =[]
     print('calculating the average ....')
     counter = 0
+    xdays = len(iterationObject[0])
+
     while counter < xdays:
         graphObj = dobj()
         graphObj.day = counter +1
         graphObj.averaged= True
         graphObj.totalWordCount = 0
         graphObj.uniqueWordCount = 0
-        graphObj.uniqueWordSet = set()
 
-        for item in iterations:
+        for item in iterationObject:
+
             graphObj.totalWordCount += item[counter].totalWordCount
             graphObj.uniqueWordCount += item[counter].uniqueWordCount
-            graphObj.uniqueWordSet  = set.union(graphObj.uniqueWordSet).union(item[counter].uniqueWordSet) # ----------------- TODO ASK
+
 
         graphObj.totalWordCount = math.ceil(graphObj.totalWordCount/divisor)
         graphObj.uniqueWordCount = math.ceil(graphObj.uniqueWordCount/divisor)
@@ -237,63 +261,173 @@ def sampleGroupForXdaysNTimes(xdays: int, bookFolderPath: str, newBooks: int, co
         averagedGraphData.append(graphObj)
         counter +=1
 
-
+    print("Finished calculating average")
     return averagedGraphData
 
-#This takes a list of sampling data from day1 to dayn, then removesx percentage of uniue words from the set.
-def removeWordsFromUniqueSet(averagedData, percentage):
-    if averagedData == None:
-        raise("Please pass a valid averaged data")
+# This function will defecit a sample by provided percentage.
+def defecitASample(sampleObj, defecitPercentage):
 
-    if percentage > 100 or percentage < 0:
-        raise("Percentage of words to be removed should be between 0 to 100.")
-    
-    print("Removing some percentage of unique words")
+    if isinstance(defecitPercentage, int):
+        defecitPercentage = float(defecitPercentage)
 
-    #now loop the data and remove x percentage of words.
-    for n in range(len(averagedData)):
-        item = averagedData[n]
-        listFromSet = list(item.uniqueWordSet)
-        random.shuffle(listFromSet)
+    if isinstance(defecitPercentage, float) == False:
+        raise Exception("defecitPercentage should be a number/float")
 
-        #now calculate how much items to remove
-        numberOfItems = math.floor((percentage/100)*len(item.uniqueWordSet))
+    if defecitPercentage < 0:
+        raise Exception("defecit percentage should be a positive float")
 
-        newList = listFromSet[numberOfItems:]
-        item.uniqueWordSet = set(newList)
-        item.uniqueWordCount = len(item.uniqueWordSet)
 
-    return averagedData
+    # TODO Also check samleObj.uniqueWordSet is not null etc, validate the data.
 
-def graphAveragedData(averagedData, plot = False, saveasCSV= False):
-    if averagedData == None:
-        raise("Please pass a valid averaged data")
+    #Create a list from word set and randomize it, (inorder to remove some random items and create a defecit)
+    listFromSet = list(sampleObj.uniqueWordSet)
+    random.shuffle(listFromSet)
 
+    #Number of items to to remove from the sample data
+    numberOfItems = math.floor((defecitPercentage/100) * len(listFromSet))
+
+    newList = listFromSet[numberOfItems:]
+
+    #Return new sample data with removed/reduced word set and unique word count.
+    newSample = dobj()
+
+    newSample.uniqueWordSet = set(newList)
+    newSample.uniqueWordCount = len(newList)
+
+    newSample.totalWordCount = len(listFromSet)
+
+    newSample.day = sampleObj.day
+    newSample.wordsRemoved = True
+
+    return newSample
+
+# This function will make a defecit to the iteration data by a given percentage.
+def defecitIteration(iteration, defecitPercentage):
+    iterationLen = len(iteration)
+    if iterationLen < 1:
+        raise Exception("Cannot defecit iteration with no data.")
+
+    #Loop the iteration and make a defecit on each sample. Save the list of that sample to new Iteration list
+    print("starting doing defecit to a iteration")
+    newIteration = []
+    for simulation in iteration:
+        newsimulation = []
+        for sample in simulation:
+            newSample = defecitASample(sample, defecitPercentage)
+            newsimulation.append(newSample)
+            print("Deficit done for a simulation")
+        print("defecit done to an iteration.")
+        newIteration.append(newsimulation)
+
+    return newIteration
+
+# This function will graph a simulation(list of daily samples) or list of simulations.
+# All simulations should have equal number of samplings in them. 
+def graphsimulationData(simulationDataList, plot = False, saveasCSV= False):
+    if simulationDataList == None or len(simulationDataList) < 1:
+        raise Exception("Please pass a valid simulation data list to plot")
+    print("Graphing data")
     #Prepare data
-    days = range(1, len(averagedData) + 1)
+    days = range(1, len(simulationDataList[0]) + 1)
+    plt.xlabel('Days')
+    plt.ylabel('Words')
 
-    dailyUniqueWordCountList =[]
-    dailyTotalWordCountList = []
+    for simulations in simulationDataList:
+        dailyUniqueWordCountList =[]
+        dailyTotalWordCountList = []
 
-    for dailyAverageData in averagedData:
-        dailyUniqueWordCountList.append(dailyAverageData.uniqueWordCount)
-        dailyTotalWordCountList.append(dailyAverageData.totalWordCount)
+        for sample in simulations:
+            dailyUniqueWordCountList.append(sample.uniqueWordCount)
+            dailyTotalWordCountList.append(sample.totalWordCount)
 
-    #Plot
-    if plot:
-        plt.plot(days, dailyUniqueWordCountList) #or use totalWords to plot total words 
-        plt.xlabel('Days')
-        plt.ylabel('Words')
-        plt.show()
+        #Plot
+        if plot:
+            plt.plot(days, dailyUniqueWordCountList) #or use totalWords to plot total words 
     
-    #Save as csv
-    if saveasCSV:
-        # dictionary of lists  
-        fields = {'days': days, 'totalWords': dailyTotalWordCountList, 'uniqueWords': dailyUniqueWordCountList}  
+        #Save as csv
+        if saveasCSV:
+            # dictionary of lists  
+            fields = {'days': days, 'totalWords': dailyTotalWordCountList, 'uniqueWords': dailyUniqueWordCountList}  
        
-        df = pd.DataFrame(fields) 
+            df = pd.DataFrame(fields) 
     
-        # saving the dataframe 
-        df.to_csv('wordModelling.csv') 
+            # saving the dataframe 
+            df.to_csv('wordModelling.csv') 
+    
+    if plot:
+        plt.show()
 
-    return dailyUniqueWordCountList; #returning a list of numbers that represents unique word count in each day.
+
+#This function takes a baseline iteration and adds new books and conversation to each sample.
+def addBookAndConvoToIteration(bookFolderPath, newBooks, convoFolderPath, newConvo, iteration):
+    listofBooks = getAllBookPath(bookFolderPath)
+    listofConvo = getAllBookPath(convoFolderPath)
+
+    random.shuffle(listofBooks)
+    random.shuffle(listofConvo)
+
+    bookLen = len(listofBooks)
+    convoLen = len(listofConvo)
+
+    bookPointer = 0
+    convoPointer = 0
+
+
+    if bookLen == 0 or convoLen == 0:
+        raise Exception("there are no enough content to sample. one of the given folder is empty.")
+    if iteration == None or len(iteration) == 0:
+        raise Exception("the iteration is null. Cannot add new books and conversation when baseline iteration is null or invalid.")
+
+    xdays = len(iteration[0])
+    totalRequiredBooks = xdays * newBooks
+    totalRequiredConvo = xdays * newConvo
+
+    if totalRequiredBooks > bookLen:
+        print(str(totalRequiredBooks) + " books are necessary for sampling but only availabe books are: " + str(bookLen) +
+       ". Warning, further sampling will be discontinued and final result will be caculated as is. ")
+
+    if totalRequiredConvo > convoLen:
+       print(str(totalRequiredConvo) + " conversations are necessary for sampling but only availabe conversations are: " + str(convoLen) +
+       ". Warning, further sampling will be discontinued and final result will be caculated as is. ")
+
+    newIteration = []
+    for simulation in iteration:
+        newsimulation = []
+        lastSample = None
+        for sample in simulation:
+            #Do the sampling.
+            if bookPointer == bookLen or convoPointer == convoLen:
+                break
+
+            newList = []
+            tempNewBooks = newBooks
+            tempNewConvo = newConvo
+
+            while tempNewConvo > 0:
+                newList.append(listofConvo[convoPointer])
+                convoPointer += 1
+                tempNewConvo -=1
+                if convoPointer == convoLen:
+                    print('Not enought conversation to sample, sampling whatever content was left')
+                    break
+
+            while tempNewBooks > 0:
+                newList.append(listofBooks[bookPointer])
+                bookPointer += 1
+                tempNewBooks -= 1
+                if bookPointer == bookLen:
+                    print('Not enought book to sample, sampling whatever content is left')
+                    break
+        
+            newSampling = SampleConversation(newList)
+            # Sample baseline sampling and todays sampling
+            mixedSampling = sampleTwoSamplings(newSampling, sample)
+            finalSampling = sampleTwoSamplings(mixedSampling, lastSample)
+            lastSample = finalSampling
+            newsimulation.append(finalSampling)
+            print("baseline sample enriched sucessfully.")
+
+        newIteration.append(newsimulation)
+        print("new books and convo added to a baseline simulation.")
+    return newIteration
+#Question, do we add new books to every sample in every simulation and every iteration?
