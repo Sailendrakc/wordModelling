@@ -389,6 +389,12 @@ def graphsimulationData(simulationDataList, plot = False, saveasCSV= False, savi
 
 #This function takes a baseline iteration and adds new books and conversation to each sample.
 def addBookAndConvoToIteration(bookFolderPath, newBooks, convoFolderPath, newConvo, iteration):
+    
+    if newBooks <= 0 and newConvo <= 0:
+        print("No new resources to add to iteration, hence returning original iteraiton.")
+        return iteration
+
+
     listofBooks = getAllBookPath(bookFolderPath)
     listofConvo = getAllBookPath(convoFolderPath)
 
