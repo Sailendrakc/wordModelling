@@ -6,6 +6,12 @@ from dumpObject import dobj
 
 class TestUtilities(unittest.TestCase):
 
+    def test_refineLineWithNormalization(self):
+        testStr = " I am eating a lot of apples."
+        expectedList = ['i', 'am', 'eating', 'a', 'lot', 'of', 'apple']
+        outputList = utilities.refineLine(testStr, None, True)
+        self.assertEqual(outputList, expectedList)
+
     def test_getAllBookPath(self):
         
         folderPath = os.getcwd() + "\\testFolder"
@@ -127,6 +133,8 @@ class TestUtilities(unittest.TestCase):
         outputList = utilities.refineLine(testStr, None)
 
         self.assertEqual(expectedList, outputList)
+
+
 
 if __name__ == '__main__':
     unittest.main()

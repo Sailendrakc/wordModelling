@@ -1,5 +1,6 @@
 
 from ast import Try
+from cProfile import label
 from cmath import e
 from email import iterators
 from pickle import TRUE
@@ -12,6 +13,13 @@ import math
 import string
 import matplotlib.pyplot as plt
 import pandas as pd 
+import nltk
+from nltk.stem import PorterStemmer
+from nltk.stem import WordNetLemmatizer
+
+wordnet_lemmatizer = WordNetLemmatizer()
+nltk.download('wordnet')
+nltk.download('omw-1.4')
 
 # this function returns token, typecount and type set ( unique word list) from a  text file file
 def readTxtData(path: str) -> dobj:
@@ -54,7 +62,7 @@ def readTxtData(path: str) -> dobj:
         return wordSet
 
 #This method is used to remove whitespaces and punctuation from a string and it returns a list of words.
-def refineLine(line: str, punctuationDict: dict = None) -> list:
+def refineLine(line: str, punctuationDict: dict = None, normalize = False) -> list:
 
     punc = punctuationDict
     if punctuationDict is None:
@@ -65,6 +73,12 @@ def refineLine(line: str, punctuationDict: dict = None) -> list:
         del punc[apostrophieUnicode]
 
     wordList =  line.lower().strip("' ").translate(punc).split()
+    if normalize:
+        normalizedList = []
+        for word in wordList:
+            normalizedList.append(wordnet_lemmatizer.lemmatize(word))
+        return normalizedList
+
     return wordList
 
 # this function gets all the .txt files inside a given folder
@@ -321,41 +335,56 @@ def defecitIteration(iteration, defecitPercentage):
 
     return newIteration
 
-# This function will graph a simulation(list of daily samples) or list of simulations.
+# This function will graph a simulation(list of [daily samples, label]) or list of simulations.
 # All simulations should have equal number of samplings in them. 
-def graphsimulationData(simulationDataList, plot = False, saveasCSV= False):
+def graphsimulationData(simulationDataList, plot = False, saveasCSV= False, savingFileName = 'graphData.csv'):
     if simulationDataList == None or len(simulationDataList) < 1:
         raise Exception("Please pass a valid simulation data list to plot")
     print("Graphing data")
     #Prepare data
-    days = range(1, len(simulationDataList[0]) + 1)
+    days = None
+    try:
+        days = range(1, len(simulationDataList[0][0]) + 1)
+    except:
+        raise Exception("Please put valid data and label for graphing. It should be a list of list like, [[graphngdata1, lable1], [graphingdata2, label2]]." +
+            "Labels should not be same")
+
     plt.xlabel('Days')
     plt.ylabel('Words')
+
+    fieldsForCSV = {}
 
     for simulations in simulationDataList:
         dailyUniqueWordCountList =[]
         dailyTotalWordCountList = []
 
-        for sample in simulations:
+        for sample in simulations[0]:
             dailyUniqueWordCountList.append(sample.uniqueWordCount)
             dailyTotalWordCountList.append(sample.totalWordCount)
-
+        _label = ''
+        try:
+           _label = simulations[1]
+        except:
+            raise Exception("Please put valid label for graphing. It should be a list of list like, [[graphngdata1, lable1], [graphingdata2, label2]]." +
+            "Labels should not be same and should start with an alphabet and not like '_dog' ")
+        if saveasCSV:
+            fieldsForCSV[_label] = dailyUniqueWordCountList
         #Plot
         if plot:
-            plt.plot(days, dailyUniqueWordCountList) #or use totalWords to plot total words 
-    
-        #Save as csv
-        if saveasCSV:
-            # dictionary of lists  
-            fields = {'days': days, 'totalWords': dailyTotalWordCountList, 'uniqueWords': dailyUniqueWordCountList}  
-       
-            df = pd.DataFrame(fields) 
-    
-            # saving the dataframe 
-            df.to_csv('wordModelling.csv') 
+            print(_label)
+            plt.plot(days, dailyUniqueWordCountList, label = _label) #or use totalWords to plot total words 
+            plt.legend(loc="upper left")
     
     if plot:
         plt.show()
+
+    #Save as csv
+    if saveasCSV:
+        # dictionary of lists  
+        df = pd.DataFrame(fieldsForCSV) 
+        # saving the dataframe 
+        df.to_csv(savingFileName) 
+        print(savingFileName + " file saved!")
 
 
 #This function takes a baseline iteration and adds new books and conversation to each sample.
@@ -430,4 +459,3 @@ def addBookAndConvoToIteration(bookFolderPath, newBooks, convoFolderPath, newCon
         newIteration.append(newsimulation)
         print("new books and convo added to a baseline simulation.")
     return newIteration
-#Question, do we add new books to every sample in every simulation and every iteration?

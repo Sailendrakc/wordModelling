@@ -18,11 +18,12 @@ def plotDailyData(dailyData, dailyData2 = None):
     plt.show()
 
 
+
 def test_sampleForXdaysNTimes():
     bookPath = r'C:\Users\saile\OneDrive\Desktop\wordModelling\book1'
     convoPath = r'C:\Users\saile\OneDrive\Desktop\wordModelling\Convos'
 
-    xdays = 100
+    xdays = 10
     booksPerDay = 5
     convoPerDay = 0
     iterationTime = 5
@@ -55,6 +56,7 @@ def test_sampleForXdaysNTimes():
     averagedAddedIterationsimulation = utilities.averageIteration(addedIteration)
 
     # get plotting data and plot for each data points.
-    utilities.graphsimulationData([averagedIterationsimulation, averagedDefecitIterationsimulation, averagedAddedIterationsimulation], True, False);
+    utilities.graphsimulationData([ [averagedIterationsimulation, "baseline"], [averagedDefecitIterationsimulation, "defecit"],
+                                  [averagedAddedIterationsimulation, "enriched"]], True, True, "threeGraphData.csv");
 
 test_sampleForXdaysNTimes()
