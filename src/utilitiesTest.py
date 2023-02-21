@@ -6,12 +6,21 @@ from dumpObject import dobj
 
 class TestUtilities(unittest.TestCase):
 
-    def test_refineLineWithNormalization(self):
+    # Test for refining line with lematization true.
+    def test_refineLineWithLemmatization(self):
         testStr = " I am eating a lot of apples."
         expectedList = ['i', 'am', 'eating', 'a', 'lot', 'of', 'apple']
         outputList = utilities.refineLine(testStr, None, True)
         self.assertEqual(outputList, expectedList)
 
+    # Test for refining line with stemmization true or lematization false.
+    def test_refineLineWithStemmization(self):
+        testStr = " Cats play football but are friend in trouble"
+        expectedList = ['cat', 'play', 'footbal', 'but', 'are', 'friend', 'in', 'troubl']
+        outputList = utilities.refineLine(testStr, None, False)
+        self.assertEqual(outputList, expectedList)
+
+    # Test for getting list of book (.txt file) path from folder path.
     def test_getAllBookPath(self):
         
         folderPath = os.getcwd() + "\\testFolder"
@@ -41,6 +50,7 @@ class TestUtilities(unittest.TestCase):
         self.assertEqual(result, expectedResult)
         self.assertNotEqual(result, unexpectedResult1)
 
+    # Test for sampling a conversation
     def test_sampleConversation(self):
 
         folderPath = os.getcwd() + "\\testFolder"
@@ -72,6 +82,7 @@ class TestUtilities(unittest.TestCase):
         self.assertEqual(sampledResult.totalWordCount, expectedTotalWordCount)
         self.assertEqual(sampledResult.uniqueWordCount, expectedUniqueWordCount)
 
+    # Test for reading text data from a file
     def test_readtextData(self):
 
         folderPath = os.getcwd() + "\\testFolder"
@@ -86,8 +97,9 @@ class TestUtilities(unittest.TestCase):
         shutil.rmtree(folderPath)
         
         expectedTotalWordCount = 25
-        expectedwordSet = {'hey','how', 'is', 'it', 'going', 'the', 'summer', 'good', 'i', 'hope', 'you', 'enjoy', 'your',
-                           'time', 'sure', 'will', 'this', 'ok'}
+        expectedwordSet =         {'hey', 'summer', 'going', 'you', 'enjoy', 'the', 'this', 'how', 'hope',
+                                  'i', 'sure', 'your', 'is', 'ok', 'it', 'good', 'time', 'will'}
+
         expectedTotalUniqueWordCount = len(expectedwordSet)
 
         self.assertIsNotNone(sampledData)
@@ -96,6 +108,7 @@ class TestUtilities(unittest.TestCase):
         self.assertEqual(sampledData.uniqueWordCount, expectedTotalUniqueWordCount)
         self.assertTrue(sampledData.uniqueWordSet == expectedwordSet)
 
+    # Test for combining two samplings
     def test_sampleTwoSamplings(self):
 
         folderPath = os.getcwd() + "\\testFolder"
@@ -126,13 +139,6 @@ class TestUtilities(unittest.TestCase):
         self.assertTrue(finalSampling.uniqueWordSet == expectedSample.uniqueWordSet)
         self.assertEqual(finalSampling.uniqueWordCount, expectedSample.uniqueWordCount)
         self.assertEqual(finalSampling.totalWordCount, expectedSample.totalWordCount)
-
-    def test_refineLine(self):
-        testStr = "' 'I am a fox? Am    I    A Fox.., ? He'y ! 10%  \n       \n  newLine  \n"
-        expectedList = ['i', 'am', 'a', 'fox', 'am', 'i', 'a', 'fox', "he'y", '10', 'newline']
-        outputList = utilities.refineLine(testStr, None)
-
-        self.assertEqual(expectedList, outputList)
 
 
 

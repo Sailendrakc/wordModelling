@@ -18,11 +18,12 @@ from nltk.stem import PorterStemmer
 from nltk.stem import WordNetLemmatizer
 
 wordnet_lemmatizer = WordNetLemmatizer()
+porter_stemmer = PorterStemmer()
 nltk.download('wordnet')
 nltk.download('omw-1.4')
 
 # this function returns token, typecount and type set ( unique word list) from a  text file file
-def readTxtData(path: str) -> dobj:
+def readTxtData(path: str, lemmatize = True) -> dobj:
         
         if(type(path) is not str):
              raise Exception("Some paths in lists are not valid path. Path should be string")
@@ -51,7 +52,7 @@ def readTxtData(path: str) -> dobj:
 
             # Read and extract into a set
             for line in file1:
-                word_list_from_line = refineLine(line, punc)
+                word_list_from_line = refineLine(line, punc, lemmatize)
                 wordSet.rawWords.append(word_list_from_line)
                 wordSet.totalWordCount += len(word_list_from_line)
                 uniqueWordSet.update(word_list_from_line)
@@ -62,7 +63,8 @@ def readTxtData(path: str) -> dobj:
         return wordSet
 
 #This method is used to remove whitespaces and punctuation from a string and it returns a list of words.
-def refineLine(line: str, punctuationDict: dict = None, normalize = False) -> list:
+# If lemmatize is set to false, the words will be stemmized, as default, lemmatize is set to true.
+def refineLine(line: str, punctuationDict: dict = None, lemmatize = True) -> list:
 
     punc = punctuationDict
     if punctuationDict is None:
@@ -73,13 +75,16 @@ def refineLine(line: str, punctuationDict: dict = None, normalize = False) -> li
         del punc[apostrophieUnicode]
 
     wordList =  line.lower().strip("' ").translate(punc).split()
-    if normalize:
-        normalizedList = []
+    if lemmatize:
+        lemmatizeList = []
         for word in wordList:
-            normalizedList.append(wordnet_lemmatizer.lemmatize(word))
-        return normalizedList
-
-    return wordList
+            lemmatizeList.append(wordnet_lemmatizer.lemmatize(word))
+        return lemmatizeList
+    else:
+        stemmizedList = []
+        for word in wordList:
+            stemmizedList.append(porter_stemmer.stem(word))
+        return stemmizedList
 
 # this function gets all the .txt files inside a given folder
 def getAllBookPath(pathOfFolder: str) -> list:
