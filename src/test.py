@@ -18,11 +18,12 @@ def plotDailyData(dailyData, dailyData2 = None):
     plt.show()
 
 
+
 def test_sampleForXdaysNTimes():
     bookPath = r'C:\Users\saile\OneDrive\Desktop\wordModelling\book1'
     convoPath = r'C:\Users\saile\OneDrive\Desktop\wordModelling\Convos'
 
-    xdays = 100
+    xdays = 10
     booksPerDay = 5
     convoPerDay = 0
     iterationTime = 5
@@ -45,7 +46,7 @@ def test_sampleForXdaysNTimes():
     #this is iteration that was enriched with 1 book and 2 convo per day.
     #INPUT -[[_day1, _day2, _day3, _day4], [_day1, _day2, _day3, _day4], [_day1, _day2, _day3, _day4]]
     #OUTPUt - [[_day1, _day2, _day3, _day4], [_day1, _day2, _day3, _day4], [_day1, _day2, _day3, _day4]]
-    addedIteration = utilities.addBookAndConvoToIteration(bookPath, 1, convoPath, 0, defecitIteration)
+    addedIteration = utilities.addBookAndConvoToIteration(bookPath, 0, convoPath, 0, defecitIteration)
 
     #Create average simulation out of defecit iterations.
     averagedDefecitIterationsimulation = utilities.averageIteration(defecitIteration)
@@ -55,6 +56,7 @@ def test_sampleForXdaysNTimes():
     averagedAddedIterationsimulation = utilities.averageIteration(addedIteration)
 
     # get plotting data and plot for each data points.
-    utilities.graphsimulationData([averagedIterationsimulation, averagedDefecitIterationsimulation, averagedAddedIterationsimulation], True, False);
+    utilities.graphsimulationData([ [averagedIterationsimulation, "baseline"], [averagedDefecitIterationsimulation, "defecit"],
+                                  [averagedAddedIterationsimulation, "enriched"]], True, False, "threeGraphData.csv");
 
 test_sampleForXdaysNTimes()
