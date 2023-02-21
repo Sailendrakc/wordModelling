@@ -6,6 +6,39 @@ from dumpObject import dobj
 
 class TestUtilities(unittest.TestCase):
 
+    # Test for stopList
+    def test_sampling_with_StopList(self):
+        folderPath = os.getcwd() + "\\testFolder"
+        
+        #Create a folder with files
+        os.mkdir(folderPath)
+
+        with open('testFolder/testFile1.txt', 'w') as f:
+            f.write('A happy birthday to you and thank you very much the birthday is always happy and never sad')
+
+        with open('testFolder/testFile2.txt', 'w') as f:
+            f.write('happy new year to you and you are very welcome')
+
+        with open('testFolder/testFile3.txt', 'w') as f:
+            f.write('happy marriage aniversary to you stay good stay fit an never sad')
+
+        stopList = {'a', 'an', 'the'}
+
+        sampledResult = utilities.SampleConversation(utilities.getAllBookPath(folderPath), True, stopList)
+
+        expectedUniqueWordSet = {'happy', 'birthday', 'to', 'you', 'and', 'thank', 'very', 'much', 'is', 'always', 'never', 'sad', 'new', 
+                                 'year', 'are', 'welcome', 'marriage', 'aniversary', 'stay', 'good', 'fit'}
+        expectedTotalWordCount = 40
+        expectedUniqueWordCount = len(expectedUniqueWordSet)
+
+        #Delete the created contents.
+        shutil.rmtree(folderPath)
+
+        self.assertIsNotNone(sampledResult)
+        self.assertEqual(sampledResult.uniqueWordSet, expectedUniqueWordSet)
+        self.assertEqual(sampledResult.totalWordCount, expectedTotalWordCount)
+        self.assertEqual(sampledResult.uniqueWordCount, expectedUniqueWordCount)
+
     # Test for refining line with lematization true.
     def test_refineLineWithLemmatization(self):
         testStr = " I am eating a lot of apples."

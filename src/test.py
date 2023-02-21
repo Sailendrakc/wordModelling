@@ -18,13 +18,12 @@ def plotDailyData(dailyData, dailyData2 = None):
     plt.show()
 
 
-
 def test_sampleForXdaysNTimes():
-    bookPath = r'C:\Users\saile\OneDrive\Desktop\wordModelling\book1'
+    bookPath = r'C:\Users\saile\OneDrive\Desktop\wordModelling\Books'
     convoPath = r'C:\Users\saile\OneDrive\Desktop\wordModelling\Convos'
 
     xdays = 10
-    booksPerDay = 5
+    booksPerDay = 1
     convoPerDay = 0
     iterationTime = 5
 
@@ -43,20 +42,35 @@ def test_sampleForXdaysNTimes():
     defecitIteration = utilities.defecitIteration(iterations, 10)
     #[[_day1, _day2, _day3, _day4], [_day1, _day2, _day3, _day4], [_day1, _day2, _day3, _day4]]
 
+    #Create average simulation out of defecit iterations.
+    averagedDefecitIterationsimulation = utilities.averageIteration(defecitIteration)
+    #[_AvgDay1, _AvgDay2, _AvgDay3, _AvgDay4]
+
     #this is iteration that was enriched with 1 book and 2 convo per day.
     #INPUT -[[_day1, _day2, _day3, _day4], [_day1, _day2, _day3, _day4], [_day1, _day2, _day3, _day4]]
     #OUTPUt - [[_day1, _day2, _day3, _day4], [_day1, _day2, _day3, _day4], [_day1, _day2, _day3, _day4]]
     addedIteration = utilities.addBookAndConvoToIteration(bookPath, 0, convoPath, 0, defecitIteration)
 
-    #Create average simulation out of defecit iterations.
-    averagedDefecitIterationsimulation = utilities.averageIteration(defecitIteration)
-    #[_AvgDay1, _AvgDay2, _AvgDay3, _AvgDay4]
-
     #this is averaged version of that enriched iteration.
     averagedAddedIterationsimulation = utilities.averageIteration(addedIteration)
 
     # get plotting data and plot for each data points.
-    utilities.graphsimulationData([ [averagedIterationsimulation, "baseline"], [averagedDefecitIterationsimulation, "defecit"],
-                                  [averagedAddedIterationsimulation, "enriched"]], True, False, "threeGraphData.csv");
+    utilities.graphsimulationData([averagedIterationsimulation, averagedDefecitIterationsimulation, averagedAddedIterationsimulation], True, False);
 
-test_sampleForXdaysNTimes()
+#test_sampleForXdaysNTimes()
+
+def readBook():
+    bookPath = r'C:\Users\saile\OneDrive\Desktop\wordModelling\Books'
+    links =  utilities.getAllBookPath(bookPath)
+
+    for x in range(0,6):
+        path = links[x]
+        print(path)
+        res = utilities.readTxtData(path)
+        print("total word count is : "+ str(res.totalWordCount) + " , unique word count is: " + str(res.uniqueWordCount))
+        print("\n")
+
+    #Noe read one by one
+    #https://commentpicker.com/word-counter.php
+
+readBook()
