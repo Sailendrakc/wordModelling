@@ -39,6 +39,9 @@ printAveragedNumbers = True
 # This flag will turn stemming on instead of lemitization if set to FALSE, default is true.
 lemitize = True
 
+#This set will act as stopList. Meaning we will ignore any words that are here in this set. 
+stopList = {'a', 'the', 'an'}
+
 #------------ PRORAM VARIABLES -----------#
 
 # This stores the list of simulations that are sampled using above options
@@ -133,7 +136,7 @@ def sampleGroupForXdays():
             break
 
         #Generate base sampling and then perform defit and enrichment on it.
-        baseSampling = utilities.SampleConversation(newBaseList, lemitize)
+        baseSampling = utilities.SampleConversation(newBaseList, lemitize, stopList)
         defecitSampling = utilities.defecitASample(baseSampling, defecitPercentage)
         enrichedSampling = utilities.enrichSample(defecitSampling, newEnrichList)
 

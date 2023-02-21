@@ -103,7 +103,7 @@ def getAllBookPath(pathOfFolder: str) -> list:
 
 
 # this function takes a list of txt files and samples it.
-def SampleConversation(paths : list, lemitize = True) -> dobj:
+def SampleConversation(paths : list, lemitize = True, stoplist = {}) -> dobj:
         # read all the files and sample them
 
         subSample = []
@@ -120,7 +120,7 @@ def SampleConversation(paths : list, lemitize = True) -> dobj:
         
         for elem in subSample:
             finalsample.totalWordCount += elem.totalWordCount
-            finalsample.uniqueWordSet = set().union(finalsample.uniqueWordSet).union(elem.uniqueWordSet)
+            finalsample.uniqueWordSet = set().union(finalsample.uniqueWordSet).union(elem.uniqueWordSet).difference(stoplist)
 
         finalsample.uniqueWordCount = len(finalsample.uniqueWordSet)
 
