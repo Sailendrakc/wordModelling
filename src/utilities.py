@@ -103,13 +103,13 @@ def getAllBookPath(pathOfFolder: str) -> list:
 
 
 # this function takes a list of txt files and samples it.
-def SampleConversation(paths : list) -> dobj:
+def SampleConversation(paths : list, lemitize = True) -> dobj:
         # read all the files and sample them
 
         subSample = []
 
         for path in paths:
-            subSample.append(readTxtData(path))
+            subSample.append(readTxtData(path, lemitize))
 
         #Now subsample contains word count and unique word count ( number of token and types)
         #We can caluclate average or whatever from this data.
@@ -315,7 +315,6 @@ def defecitASample(sampleObj, defecitPercentage):
 
     newSample.totalWordCount = len(listFromSet)
 
-    newSample.day = sampleObj.day
     newSample.wordsRemoved = True
 
     return newSample
@@ -391,6 +390,15 @@ def graphsimulationData(simulationDataList, plot = False, saveasCSV= False, savi
         df.to_csv(savingFileName) 
         print(savingFileName + " file saved!")
 
+#This function takes a sample to enrich and list of txt files path to enrich from , then returns enriched sample.
+def enrichSample(originalSample, listOfSrcToEnrichFrom):
+    newDataSample = SampleConversation(listOfSrcToEnrichFrom)
+    enrichedSample = sampleTwoSamplings(originalSample, newDataSample)
+
+    return enrichedSample
+
+def sampleToString(sample):
+    return " TotalWords: " + str(sample.totalWordCount) + " uniqueWords: " + str(sample.uniqueWordCount)
 
 #This function takes a baseline iteration and adds new books and conversation to each sample.
 def addBookAndConvoToIteration(bookFolderPath, newBooks, convoFolderPath, newConvo, iteration):
@@ -470,3 +478,4 @@ def addBookAndConvoToIteration(bookFolderPath, newBooks, convoFolderPath, newCon
         newIteration.append(newsimulation)
         print("new books and convo added to a baseline simulation.")
     return newIteration
+
