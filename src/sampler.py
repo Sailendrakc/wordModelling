@@ -1,4 +1,5 @@
 
+from doctest import OutputChecker
 from dumpObject import dobj
 import utilities
 import random
@@ -13,10 +14,10 @@ bookFolderPath = r'C:\Users\saile\OneDrive\Desktop\wordModelling\Books'
 convoFolderPath = r'C:\Users\saile\OneDrive\Desktop\wordModelling\Convos'
 
 #This is the number of books to feed the child per day
-booksPerDayForBaseline = 2
+booksPerDayForBaseline = 0
 
 #This is the number of convos to feed the child per day
-convoPerDayForBaseline = 0
+convoPerDayForBaseline = 2
 
 # This is the number of days per one simulation.
 totalDaysPerSimulation =10
@@ -36,8 +37,9 @@ enrichConvoPerDay = 0
 # This flag if set to true will print averaged numbers to the console.
 printAveragedNumbers = True
 
-# This flag will turn stemming on instead of lemitization if set to FALSE, default is true.
-lemitize = True
+# When This flag is set to true, lemitize will be performed, when false, stemmizing will be performed,
+# when None, no lemitize or stemming will be performed.
+lemitize = None
 
 #This set will act as stopList. Meaning we will ignore any words that are here in this set. 
 stopList = {'a', 'the', 'an'}
@@ -45,8 +47,7 @@ stopList = {'a', 'the', 'an'}
 #------------ PRORAM VARIABLES -----------#
 
 # This stores the list of simulations that are sampled using above options
-
-
+outputLog = 'Program Start \n'
 
 # ----------- INPUT VALIDATION -----------#
 # For now validation will be part of the function that takes that input.
@@ -134,7 +135,12 @@ def sampleGroupForXdays():
         
         if notEnough:
             break
+        global outputLog
+        outputLog += " Doing sampling for day: " + str(day) + "\n"
 
+        outputLog += "These inputs were used in samplings: \n"
+        for links in newBaseList:
+            outputLog += "    " + links + " \n"
         #Generate base sampling and then perform defit and enrichment on it.
         baseSampling = utilities.SampleConversation(newBaseList, lemitize, stopList)
         defecitSampling = utilities.defecitASample(baseSampling, defecitPercentage)
@@ -142,14 +148,24 @@ def sampleGroupForXdays():
 
         # Sample yesterday sampling and todays sampling for all three kinds of samplings
         finalBaseSampling = utilities.sampleTwoSamplings(baseSampling, lastBaseSample)
+        outputLog += "BASE: tokens: " + str(finalBaseSampling.totalWordCount) + " and types (unique) : " + str(finalBaseSampling.uniqueWordCount) + "\n"
+
         finalDefecitSampling = utilities.sampleTwoSamplings(defecitSampling, lastDefecitSample)
+        outputLog += "DEFECIT: tokens: "+ str(finalDefecitSampling.totalWordCount) + " and types (unique): " + str(finalDefecitSampling.uniqueWordCount) + "\n"
+
         finalEnrichedSampling = utilities.sampleTwoSamplings(enrichedSampling, lastEnrichedSample)
+        outputLog += "ENRICHED: tokens: "+ str(finalEnrichedSampling.totalWordCount) + " and types (unique): " + str(finalEnrichedSampling.uniqueWordCount) + "\n"
+
 
         lastBaseSample = finalBaseSampling
         lastDefecitSample = finalDefecitSampling
         lastEnrichedSample = finalEnrichedSampling
 
-        print("sampling for day " + str(day) + " is done.")
+        outputLog += enrichedSampling.log
+
+
+        outputLog += "sampling for day " + str(day) + " is done. \n"
+        outputLog += " \n"
 
         # Store all three kinds of samplings
         baseSimulation.append(finalBaseSampling)
@@ -238,14 +254,8 @@ def SampleGroupForXDaysNTimes():
         baseIterationNumbers[dayx].uniqueWordCount = math.floor(baseIterationNumbers[dayx].uniqueWordCount / totalSimulationPerIteration)
         defecitIterationNumbers[dayx].uniqueWordCount = math.floor(defecitIterationNumbers[dayx].uniqueWordCount / totalSimulationPerIteration)
         enrichedIterationNumbers[dayx].uniqueWordCount = math.floor(enrichedIterationNumbers[dayx].uniqueWordCount / totalSimulationPerIteration)
-        
-        if printAveragedNumbers:
-            print("\n")
-            print( "BASE: day is: " + str(dayx+1) + utilities.sampleToString(baseIterationNumbers[dayx]))
-            print( "DEFECIT: day is: " + str(dayx+1) + utilities.sampleToString(defecitIterationNumbers[dayx]))
-            print( "Enriched: day is: " + str(dayx+1) + utilities.sampleToString(enrichedIterationNumbers[dayx]))
-            print("\n")
 
+    print(outputLog)
     #Now graph and save the simulations
     utilities.graphsimulationData([[baseIterationNumbers, "baseCurve"], [defecitIterationNumbers, "defecitCurve"], [enrichedIterationNumbers, "enrichedCurve"]], True)
 
