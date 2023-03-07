@@ -17,13 +17,15 @@ import nltk
 from nltk.stem import PorterStemmer
 from nltk.stem import WordNetLemmatizer
 
+#Lemetizer and Stemmer
 wordnet_lemmatizer = WordNetLemmatizer()
 porter_stemmer = PorterStemmer()
+
 nltk.download('wordnet')
 nltk.download('omw-1.4')
 
 # this function returns token, typecount and type set ( unique word list) from a  text file file
-def readTxtData(path: str, lemmatize = True) -> dobj:
+def readTxtData(path: str, lemmatize) -> dobj:
         
         if(type(path) is not str):
              raise Exception("Some paths in lists are not valid path. Path should be string")
@@ -64,7 +66,7 @@ def readTxtData(path: str, lemmatize = True) -> dobj:
 
 #This method is used to remove whitespaces and punctuation from a string and it returns a list of words.
 # If lemmatize is set to false, the words will be stemmized, as default, lemmatize is set to true.
-def refineLine(line: str, punctuationDict: dict = None, lemmatize = True) -> list:
+def refineLine(line: str, punctuationDict: dict = None, lemmatize = None) -> list:
 
     punc = punctuationDict
     if punctuationDict is None:
@@ -75,16 +77,19 @@ def refineLine(line: str, punctuationDict: dict = None, lemmatize = True) -> lis
         del punc[apostrophieUnicode]
 
     wordList =  line.lower().strip("' ").translate(punc).split()
-    if lemmatize:
-        lemmatizeList = []
-        for word in wordList:
-            lemmatizeList.append(wordnet_lemmatizer.lemmatize(word))
-        return lemmatizeList
+    if lemmatize == None:
+        return wordList
     else:
-        stemmizedList = []
-        for word in wordList:
-            stemmizedList.append(porter_stemmer.stem(word))
-        return stemmizedList
+        if lemmatize:
+            lemmatizeList = []
+            for word in wordList:
+                lemmatizeList.append(wordnet_lemmatizer.lemmatize(word))
+            return lemmatizeList
+        else:
+            stemmizedList = []
+            for word in wordList:
+                stemmizedList.append(porter_stemmer.stem(word))
+            return stemmizedList
 
 # this function gets all the .txt files inside a given folder
 def getAllBookPath(pathOfFolder: str) -> list:
@@ -103,7 +108,7 @@ def getAllBookPath(pathOfFolder: str) -> list:
 
 
 # this function takes a list of txt files and samples it.
-def SampleConversation(paths : list, lemitize = True, stoplist = {}) -> dobj:
+def SampleConversation(paths : list, lemitize = None, stoplist = {}) -> dobj:
         # read all the files and sample them
 
         subSample = []
@@ -117,6 +122,7 @@ def SampleConversation(paths : list, lemitize = True, stoplist = {}) -> dobj:
         finalsample = dobj()
         finalsample.uniqueWordSet = {}
         finalsample.totalWordCount = 0
+        finalsample.inputs = paths;
         
         for elem in subSample:
             finalsample.totalWordCount += elem.totalWordCount
@@ -394,7 +400,11 @@ def graphsimulationData(simulationDataList, plot = False, saveasCSV= False, savi
 def enrichSample(originalSample, listOfSrcToEnrichFrom):
     newDataSample = SampleConversation(listOfSrcToEnrichFrom)
     enrichedSample = sampleTwoSamplings(originalSample, newDataSample)
-
+    enrichedSample.log = " "
+    enrichedSample.log += "These inputs were used in enriching:" + "\n"
+    for links in listOfSrcToEnrichFrom:
+            enrichedSample.log += "    " + links + "\n"
+    enrichedSample.log = "Inputs for enrich had types: " + str(newDataSample.totalWordCount) + " tokens (unique): " + str(newDataSample.uniqueWordCount) + "\n"
     return enrichedSample
 
 def sampleToString(sample):

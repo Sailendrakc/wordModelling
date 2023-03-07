@@ -31,3 +31,23 @@ cat     0       1       0           0
 ..  
 ..
 ..
+
+
+base 1 -    one two three four five [types = 5]
+defecit 1 - one two three [types = 3]
+enrich 1 -  one two three four six [types = 5]
+
+t.base 2 -    one five six seven eight [ types = 5]
+t.defecit 2 - one six seven eight [types = 4, -1]
+t.enrich 2 -  one six seven eight nine ten [ types = 6, +2]
+
+cumulative 
+base2 =  base1 + t.base2 = one two three four five + one five six seven eight
+      =  one two three four five six seven eight [ types = 8]
+
+defecit 2 = defecit 1 + t.defecit 2 = one two three + one six seven eight
+	  = one two three six seven eight [ types = 6, -2]
+
+enrich 2 = enrich 1 + t.enrich2 = one two three four six + one six seven eight nine ten
+	=  one two three four six seven eight nine ten [ types = 9, +3]
+
