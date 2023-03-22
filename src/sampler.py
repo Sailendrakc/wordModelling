@@ -4,6 +4,8 @@ from dumpObject import dobj
 import utilities
 import random
 import math
+import pandas as pd 
+from collections import Counter
 
 # -----------OPTIONS ------------
 # First we provide the necessary options to run
@@ -20,7 +22,7 @@ booksPerDayForBaseline = 0
 convoPerDayForBaseline = 2
 
 # This is the number of days per one simulation.
-totalDaysPerSimulation =10
+totalDaysPerSimulation =15
 
 # This is the number of simulation per iteration. All iterations data are averaged.
 totalSimulationPerIteration = 5
@@ -39,7 +41,7 @@ printAveragedNumbers = True
 
 # When This flag is set to true, lemitize will be performed, when false, stemmizing will be performed,
 # when None, no lemitize or stemming will be performed.
-lemitize = None
+lemitize = True
 
 #This set will act as stopList. Meaning we will ignore any words that are here in this set. 
 stopList = {'a', 'the', 'an'}
@@ -55,8 +57,8 @@ outputLog = 'Program Start \n'
 def sampleGroupForXdays():
 
     #Get all books and convo that are to be used for sampling
-    listOfBooks =  utilities.getAllBookPath(bookFolderPath)
-    listOfConvos = utilities.getAllBookPath(convoFolderPath)
+    listOfBooks =  utilities.getAllFilePath(bookFolderPath)
+    listOfConvos = utilities.getAllFilePath(convoFolderPath)
 
     #Randomize the list
     random.shuffle(listOfBooks)
@@ -136,13 +138,22 @@ def sampleGroupForXdays():
         if notEnough:
             break
         global outputLog
-        outputLog += " Doing sampling for day: " + str(day) + "\n"
+        outputLog += " Doing sampling for Interaction: " + str(day) + "\n"
 
         outputLog += "These inputs were used in samplings: \n"
         for links in newBaseList:
             outputLog += "    " + links + " \n"
         #Generate base sampling and then perform defit and enrichment on it.
         baseSampling = utilities.SampleConversation(newBaseList, lemitize, stopList)
+
+        #create the df for exposure count
+        baseSampling.matrixDf = pd.DataFrame(columns = ['Interaction', 'transcipt'])
+        #baseSampling.matrixDf = baseSampling.matrixDf.append({'Day': day, 'transcipt': baseSampling.allWordString}, ignore_index = True)
+
+        #Vectorize it.
+        word_count = Counter(baseSampling.allWordList)
+        baseSampling.matrixDf = pd.DataFrame.from_dict(word_count, orient='index', columns=['Interaction : ' + str(day)])
+
         defecitSampling = utilities.defecitASample(baseSampling, defecitPercentage)
         enrichedSampling = utilities.enrichSample(defecitSampling, newEnrichList)
 
@@ -164,7 +175,7 @@ def sampleGroupForXdays():
         outputLog += enrichedSampling.log
 
 
-        outputLog += "sampling for day " + str(day) + " is done. \n"
+        outputLog += "sampling for interaction " + str(day) + " is done. \n"
         outputLog += " \n"
 
         # Store all three kinds of samplings
@@ -194,6 +205,8 @@ def SampleGroupForXDaysNTimes():
     while ntimes < totalSimulationPerIteration:
         ntimes += 1
         simulationResult = sampleGroupForXdays()
+        matrixToPrint = simulationResult.baseSimulation[len(simulationResult.baseSimulation)-1].matrixDf
+        print(utilities.findAndAppendLearntDay(matrixToPrint, 10))
 
         #Loop and average
         print(" \n" + str(ntimes) + " simulation done. \n")
@@ -256,6 +269,7 @@ def SampleGroupForXDaysNTimes():
         enrichedIterationNumbers[dayx].uniqueWordCount = math.floor(enrichedIterationNumbers[dayx].uniqueWordCount / totalSimulationPerIteration)
 
     print(outputLog)
+
     #Now graph and save the simulations
     utilities.graphsimulationData([[baseIterationNumbers, "baseCurve"], [defecitIterationNumbers, "defecitCurve"], [enrichedIterationNumbers, "enrichedCurve"]], True)
 

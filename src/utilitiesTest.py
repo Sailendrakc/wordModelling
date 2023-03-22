@@ -24,7 +24,7 @@ class TestUtilities(unittest.TestCase):
 
         stopList = {'a', 'an', 'the'}
 
-        sampledResult = utilities.SampleConversation(utilities.getAllBookPath(folderPath), True, stopList)
+        sampledResult = utilities.SampleConversation(utilities.getAllFilePath(folderPath), True, stopList)
 
         expectedUniqueWordSet = {'happy', 'birthday', 'to', 'you', 'and', 'thank', 'very', 'much', 'is', 'always', 'never', 'sad', 'new', 
                                  'year', 'are', 'welcome', 'marriage', 'aniversary', 'stay', 'good', 'fit'}
@@ -54,7 +54,7 @@ class TestUtilities(unittest.TestCase):
         self.assertEqual(outputList, expectedList)
 
     # Test for getting list of book (.txt file) path from folder path.
-    def test_getAllBookPath(self):
+    def test_getAllFilePath(self):
         
         folderPath = os.getcwd() + "\\testFolder"
         
@@ -75,7 +75,7 @@ class TestUtilities(unittest.TestCase):
         unexpectedResult1 = [folderPath+'\\testFile1.txt',
                         folderPath+'\\testFile2.txt',
                         folderPath+'\\testFile3.docs']
-        result = utilities.getAllBookPath(folderPath)
+        result = utilities.getAllFilePath(folderPath)
 
         #Delete the created contents.
         shutil.rmtree(folderPath)
@@ -100,7 +100,7 @@ class TestUtilities(unittest.TestCase):
         with open('testFolder/testFile3.txt', 'w') as f:
             f.write('happy marriage aniversary to you stay good stay fit and never sad')
 
-        sampledResult = utilities.SampleConversation(utilities.getAllBookPath(folderPath))
+        sampledResult = utilities.SampleConversation(utilities.getAllFilePath(folderPath))
 
         expectedUniqueWordSet = {'happy', 'birthday', 'to', 'you', 'and', 'thank', 'very', 'much', 'is', 'always', 'never', 'sad', 'new', 
                                  'year', 'are', 'welcome', 'marriage', 'aniversary', 'stay', 'good', 'fit'}
@@ -155,7 +155,7 @@ class TestUtilities(unittest.TestCase):
         with open('testFolder/testFile2.txt', 'w') as f:
             f.write('lion zebra apple cat grass zoo')
 
-        result = utilities.getAllBookPath(folderPath)
+        result = utilities.getAllFilePath(folderPath)
 
         sampledData1 = utilities.readTxtData(result[0])
         sampledData2 = utilities.readTxtData(result[1])
