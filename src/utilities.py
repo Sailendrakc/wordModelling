@@ -1,9 +1,4 @@
 
-from ast import Try
-from cProfile import label
-from cmath import e
-from email import iterators
-from pickle import TRUE
 from dumpObject import dobj
 import os
 import glob
@@ -16,6 +11,7 @@ import pandas as pd
 import nltk
 from nltk.stem import PorterStemmer
 from nltk.stem import WordNetLemmatizer
+from sklearn.feature_extraction.text import CountVectorizer # Install scikit-learn package for this.
 
 #Lemetizer and Stemmer
 wordnet_lemmatizer = WordNetLemmatizer()
@@ -37,7 +33,6 @@ def readTxtData(path: str, lemmatize) -> dobj:
         wordSet = dobj()
         wordSet.totalWordCount = 0
         wordSet.uniqueWordCount = 0
-        uniqueWordSet = set()
 
         #Raw words is the list that contains all the words from file
         wordSet.rawWords = []
@@ -55,12 +50,12 @@ def readTxtData(path: str, lemmatize) -> dobj:
             # Read and extract into a set
             for line in file1:
                 word_list_from_line = refineLine(line, punc, lemmatize)
-                wordSet.rawWords.append(word_list_from_line)
-                wordSet.totalWordCount += len(word_list_from_line)
-                uniqueWordSet.update(word_list_from_line)
+                wordSet.rawWords.extend(word_list_from_line)
 
-        wordSet.uniqueWordCount = len(uniqueWordSet)
-        wordSet.uniqueWordSet = uniqueWordSet
+        wordSet.uniqueWordSet = set(wordSet.rawWords)
+        wordSet.uniqueWordCount = len(wordSet.uniqueWordSet)
+        wordSet.totalWordCount = len(wordSet.rawWords)
+
         # Return the set
         return wordSet
 
@@ -92,13 +87,15 @@ def refineLine(line: str, punctuationDict: dict = None, lemmatize = None) -> lis
             return stemmizedList
 
 # this function gets all the .txt files inside a given folder
-def getAllBookPath(pathOfFolder: str) -> list:
+def getAllFilePath(pathOfFolder: str, recursive = False ,extension = '.txt') -> list:
         if pathOfFolder is None or not os.path.exists(pathOfFolder):
             raise Exception("Please provide a valid path.")
 
-        # Load a random file from the folder.
+        extensionString = "/*"+ extension
+        if recursive:
+            extensionString = "/**" + extensionString
 
-        files = glob.glob(pathOfFolder + "/*.txt")
+        files = glob.glob(pathOfFolder + extensionString, recursive = recursive)
         poolOfFiles = []
         # loop through list of files
         for f in files:
@@ -123,20 +120,24 @@ def SampleConversation(paths : list, lemitize = None, stoplist = {}) -> dobj:
         finalsample.uniqueWordSet = {}
         finalsample.totalWordCount = 0
         finalsample.inputs = paths;
+        finalsample.allWordList = []
+
         
         for elem in subSample:
-            finalsample.totalWordCount += elem.totalWordCount
-            finalsample.uniqueWordSet = set().union(finalsample.uniqueWordSet).union(elem.uniqueWordSet).difference(stoplist)
+            finalsample.allWordList.extend(elem.rawWords)
 
+        finalsample.allWordList = [word for word in finalsample.allWordList if word not in stoplist]
+        finalsample.uniqueWordSet = set(finalsample.allWordList)    #.difference(set(stoplist))
         finalsample.uniqueWordCount = len(finalsample.uniqueWordSet)
+        finalsample.totalWordCount  = len(finalsample.allWordList)
 
         return finalsample
 
     # This function samples any group for certain amount of days.
 def sampleGroupForXdays(xdays: int, bookFolderPath: str, newBooks: int, convoFolderPath:str, newConvo: int):
     
-    listofBooks = getAllBookPath(bookFolderPath)
-    listofConvo = getAllBookPath(convoFolderPath)
+    listofBooks = getAllFilePath(bookFolderPath)
+    listofConvo = getAllFilePath(convoFolderPath)
 
     random.shuffle(listofBooks)
     random.shuffle(listofConvo)
@@ -197,6 +198,22 @@ def sampleGroupForXdays(xdays: int, bookFolderPath: str, newBooks: int, convoFol
             return graphData
 
         newSampling = SampleConversation(newList)
+
+        #create the df for exposure count
+        newSampling.matrixDf = pd.DataFrame('Day', 'transcipt')
+        newSampling.matrixDf.append({'Day':day, 'transcipt': newSampling.allWordString}, ignore_index = True)
+
+        #Vectorize it.
+        vectorizer = CountVectorizer()
+        rawWordList = newSampling.matrixDf["transcipt"].values.tolist()
+        vectorized_matrix = vectorizer.fit_transform(rawWordList)
+        names = vectorizer.get_feature_names_out()
+        dataa = vectorized_matrix.todense()
+        df2 = pd.DataFrame(data =dataa, columns = names, index = newSampling.matrixDf["Day"])
+        df2 = df2.T
+        df2.replace(0, None, inplace=True)
+        newSampling.matrixDf = df2
+
         # Sample yesterday sampling and todays sampling
         finalSampling = sampleTwoSamplings(newSampling, lastSample)
 
@@ -230,6 +247,18 @@ def sampleTwoSamplings(sample1, sample2):
     finalsample.totalWordCount = sample1.totalWordCount + sample2.totalWordCount
     finalsample.uniqueWordSet = set().union(sample1.uniqueWordSet).union(sample2.uniqueWordSet)
     finalsample.uniqueWordCount = len(finalsample.uniqueWordSet)
+
+    #Also combine the dataframe.
+    if hasattr(sample1, 'matrixDf') and hasattr(sample2, 'matrixDf') == False:
+        finalsample.matrixDf = sample1.matrixDf
+
+    if hasattr(sample2, 'matrixDf') and hasattr(sample1, 'matrixDf') == False:
+        finalsample.matrixDf = sample2.matrixDf
+
+    if hasattr(sample1, 'matrixDf') and hasattr(sample2, 'matrixDf'):
+        finalsample.matrixDf = pd.merge(sample1.matrixDf, sample2.matrixDf, left_index=True, right_index=True, how='outer')
+        finalsample.matrixDf = finalsample.matrixDf.fillna(0)
+        finalsample.matrixDf = finalsample.matrixDf.astype(int)
 
     return finalsample
 
@@ -418,8 +447,8 @@ def addBookAndConvoToIteration(bookFolderPath, newBooks, convoFolderPath, newCon
         return iteration
 
 
-    listofBooks = getAllBookPath(bookFolderPath)
-    listofConvo = getAllBookPath(convoFolderPath)
+    listofBooks = getAllFilePath(bookFolderPath)
+    listofConvo = getAllFilePath(convoFolderPath)
 
     random.shuffle(listofBooks)
     random.shuffle(listofConvo)
@@ -489,3 +518,39 @@ def addBookAndConvoToIteration(bookFolderPath, newBooks, convoFolderPath, newCon
         print("new books and convo added to a baseline simulation.")
     return newIteration
 
+#This takes exposure dataframe and calculates on which day a token reached exposure threshold and appends it in new column.
+def findAndAppendLearntDay(df, threshold):
+    # Loop through each row and column in reverse order
+    learntDay = []
+    average = []
+    realIndex = 0
+    for index, row in df.iterrows():
+        days = 0 
+        rawThres = 0
+        thresholdReached = False
+        for column in reversed(df.columns):
+            rawThres +=  row[column]
+            days += 1
+            if rawThres >= threshold:
+                thresholdReached = True
+                break
+        if thresholdReached == True:
+            learntDay.append(days)
+        else:
+            learntDay.append(0)
+
+        row_list = row.values.tolist()
+        del row_list[0]
+        avg = sum(row_list) / len(row_list)
+        average.append(avg);
+        realIndex += 1
+
+    df = df.assign(Learned_Day = learntDay)
+    df = df.assign(avg_exposure_perDay = average)
+    return df
+    #Now append two columns in the df.
+
+    # This method will take list of dataframes and combines them and averages the word count.
+    # Use this method to combine and average the result of exposure count matrix.
+    def dfUnion(dfList):
+        pass
