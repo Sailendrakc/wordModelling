@@ -5,6 +5,9 @@ import re
 inFolder = r'C:\Users\saile\OneDrive\Desktop\wordModelling\childesRAW'
 outFolder = r'C:\Users\saile\OneDrive\Desktop\wordModelling\cleanChildes'
 
+excludeChildVocab = True
+excludeNonChildVocab = False
+
 # This function take a folder containing conversations and outputs the folder that has files containing word spoken by child only. 
 # one input file == 1 conversation == 1 output file.
 def cleaner(inputFolder, outFolder, subfiles):
@@ -27,6 +30,12 @@ def childLineToFile(path, outFolder = outFolder):
                 ageStr += 'D'
                 
             if line.startswith('*'):
+                if excludeChildVocab == True and line.startswith('*CHI:'):
+                    continue
+
+                if excludeNonChildVocab == True and line.startswith('*CHI:') == False:
+                    continue
+
                 words = re.sub(r'[^a-zA-Z\s]', '', line).split()# split the sentence into words
                 if(len(words) == 0):
                     continue

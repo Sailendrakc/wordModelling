@@ -1,4 +1,5 @@
 
+from xml.dom.minidom import Element
 from dumpObject import dobj
 import os
 import glob
@@ -548,9 +549,25 @@ def findAndAppendLearntDay(df, threshold):
     df = df.assign(Learned_Day = learntDay)
     df = df.assign(avg_exposure_perDay = average)
     return df
-    #Now append two columns in the df.
 
-    # This method will take list of dataframes and combines them and averages the word count.
-    # Use this method to combine and average the result of exposure count matrix.
-    def dfUnion(dfList):
-        pass
+
+# This method will take list of dataframes and combines them and averages the word count.
+# Use this method to combine and average the result of exposure count matrix.
+def dfUnion(dfList):
+    mainMatrix = 0
+    listLen = len(dfList)
+    for i in range(listLen):
+        elem = dfList[i]
+        if i == 0:
+            mainMatrix = elem
+            continue
+        else: 
+            merged_df = pd.concat([mainMatrix, elem], axis='columns').fillna(0)
+            merged_df = merged_df.groupby(level=0, axis=1).sum()
+            mainMatrix = merged_df
+
+    numeric_cols = mainMatrix.select_dtypes(include=['int', 'float']).columns
+    #numeric_cols = mainMatrix.iloc[:, 1:]
+    mainMatrix[numeric_cols] = mainMatrix[numeric_cols] / listLen
+
+    return mainMatrix
