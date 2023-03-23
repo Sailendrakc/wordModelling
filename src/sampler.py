@@ -47,6 +47,11 @@ lemitize = True
 stopList = {'a', 'the', 'an'}
 
 #------------ PRORAM VARIABLES -----------#
+#When true, the averaged exposure matrix will be saved as csv.
+saveExposureMatrixAsCSV = True
+
+#This is the exposure threshold.
+learnThreshold = 10
 
 # This stores the list of simulations that are sampled using above options
 outputLog = 'Program Start \n'
@@ -201,12 +206,15 @@ def SampleGroupForXDaysNTimes():
     enrichedIterationNumbers = []
 
     ntimes = 0
+    last_ExposureMatrix_of_eachSimulations = []
 
     while ntimes < totalSimulationPerIteration:
         ntimes += 1
         simulationResult = sampleGroupForXdays()
         matrixToPrint = simulationResult.baseSimulation[len(simulationResult.baseSimulation)-1].matrixDf
-        print(utilities.findAndAppendLearntDay(matrixToPrint, 10))
+        matrixToPrint = utilities.findAndAppendLearntDay(matrixToPrint, learnThreshold)
+        print(matrixToPrint)
+        last_ExposureMatrix_of_eachSimulations.append(matrixToPrint)
 
         #Loop and average
         print(" \n" + str(ntimes) + " simulation done. \n")
@@ -269,6 +277,14 @@ def SampleGroupForXDaysNTimes():
         enrichedIterationNumbers[dayx].uniqueWordCount = math.floor(enrichedIterationNumbers[dayx].uniqueWordCount / totalSimulationPerIteration)
 
     print(outputLog)
+
+
+    if saveExposureMatrixAsCSV:
+        mainExposureMatrix = utilities.dfUnion(last_ExposureMatrix_of_eachSimulations)
+        print("Saving the averaged exposure matrix as csv")
+        mainExposureMatrix.to_csv("averagedExposureMatrix.csv")
+
+    
 
     #Now graph and save the simulations
     utilities.graphsimulationData([[baseIterationNumbers, "baseCurve"], [defecitIterationNumbers, "defecitCurve"], [enrichedIterationNumbers, "enrichedCurve"]], True)
